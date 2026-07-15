@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Počítání kasy — Rybárna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --paper:#F6F2E7; --surface:#FFFFFF; --ink:#2B2A25; --ink-soft:#6B6558;
+  --forest:#2F4B3C; --forest-dark:#213629; --ochre:#B9852B; --ochre-soft:#F1E3C4;
+  --brick:#A8442F; --brick-soft:#F5DCD5; --green-soft:#DCE8DD;
+  --line:#DED4B9; --line-soft:#EAE2CC; --radius:10px;
+  --shadow:0 1px 2px rgba(43,42,37,0.06), 0 6px 20px rgba(43,42,37,0.05);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--paper); color:var(--ink); font-family:'Work Sans', sans-serif; font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;}
+.wrap{max-width:920px;margin:0 auto;padding:32px 20px 100px;}
+
+.top{display:flex; align-items:center; gap:16px; margin-bottom:28px; padding-bottom:20px; border-bottom:2px solid var(--forest);}
+.top img{height:52px;width:auto;flex-shrink:0;}
+.top-text h1{font-family:'Fraunces', serif; font-weight:600; font-size:26px; margin:0 0 2px; color:var(--forest-dark); letter-spacing:-0.01em;}
+.top-text p{margin:0;color:var(--ink-soft);font-size:13.5px;}
+
+.section{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:20px; overflow:hidden;}
+.section-head{display:flex; align-items:baseline; gap:10px; padding:18px 22px 14px; border-bottom:1px solid var(--line-soft);}
+.section-num{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ochre); font-weight:600; letter-spacing:0.03em; border:1px solid var(--ochre); border-radius:20px; padding:2px 9px; flex-shrink:0;}
+.section-head h2{font-family:'Fraunces', serif; font-weight:600; font-size:18px; margin:0; color:var(--forest-dark);}
+.section-body{padding:20px 22px 24px;}
+.hint{color:var(--ink-soft);font-size:13px;margin:0 0 14px;}
+
+.grid{display:grid;gap:14px;}
+.grid.cols-2{grid-template-columns:1fr 1fr;}
+.grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.grid.cols-4{grid-template-columns:repeat(4,1fr);}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.03em;}
+input[type=text],input[type=date],input[type=number],textarea,select{
+  width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:7px;
+  background:var(--paper); font-family:'IBM Plex Mono', monospace; font-size:14px; color:var(--ink);
+}
+input[type=text],textarea{font-family:'Work Sans',sans-serif;}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--forest);outline-offset:1px;background:#fff;}
+textarea{resize:vertical;min-height:70px;}
+
+.date-field{position:relative;}
+.date-field input.date-display{pointer-events:none;}
+.date-field input[type=date]{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;}
+
+.toggle-row{display:flex;gap:8px;}
+.toggle-btn{flex:1;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--paper); cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink-soft);text-align:center; transition:all .12s ease;}
+.toggle-btn.active{background:var(--forest);border-color:var(--forest);color:#fff;}
+.toggle-btn:hover:not(.active){border-color:var(--forest);color:var(--forest-dark);}
+
+.bt-row{display:grid;grid-template-columns:1fr 110px 34px;gap:8px;align-items:end;margin-bottom:8px;}
+.bt-row label{margin-bottom:4px;}
+.icon-btn{width:34px;height:36px;border:1px solid var(--brick);color:var(--brick);background:#fff;border-radius:7px; cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{background:var(--brick-soft);}
+.add-link{display:inline-flex;align-items:center;gap:6px;margin-top:6px;color:var(--forest-dark);font-weight:600; cursor:pointer;font-size:13.5px;background:none;border:none;padding:6px 0;}
+.add-link:hover{text-decoration:underline;}
+
+.denom-sub{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;margin:16px 0 6px;font-weight:600;}
+table.denomtable{width:100%;border-collapse:collapse;}
+table.denomtable td, table.denomtable th{padding:6px 8px;border-bottom:1px solid var(--line-soft);font-size:14px;}
+table.denomtable th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;}
+table.denomtable td.v{font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--ink-soft);}
+table.denomtable input[type=number]{width:84px;text-align:right;font-family:'IBM Plex Mono',monospace;padding:6px 8px;}
+table.denomtable tr.total td{font-weight:700;border-top:2px solid var(--forest);border-bottom:none;padding-top:10px;color:var(--forest-dark);}
+
+.bucket-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:720px){.bucket-grid{grid-template-columns:1fr;}}
+.bucket{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--paper);}
+.bucket .bucket-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:4px;}
+.bucket .bucket-head h3{margin:0;font-family:'Fraunces',serif;font-size:15px;color:var(--forest-dark);}
+.bucket .bucket-head .target{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+table.bktable{border-collapse:collapse;width:100%;}
+table.bktable td{padding:4px 4px;font-size:13.5px;border-bottom:1px solid var(--line-soft);}
+table.bktable td.d{font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);width:66px;}
+table.bktable td.i input{width:100%;text-align:right;font-family:'IBM Plex Mono',monospace;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:#fff;}
+table.bktable td.v{font-family:'IBM Plex Mono',monospace;text-align:right;width:66px;color:var(--ink-soft);}
+.bucket-foot{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:2px solid var(--forest);font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:var(--forest-dark);}
+
+.dysko-wrap{overflow-x:auto;margin-top:18px;}
+table.dysko{border-collapse:collapse;width:100%;min-width:480px;}
+table.dysko th, table.dysko td{border:1px solid var(--line-soft);padding:6px 7px;font-size:13px;text-align:center;}
+table.dysko th{background:var(--green-soft);font-weight:700;font-size:11.5px;text-transform:uppercase;color:var(--forest-dark);}
+table.dysko td.d{font-family:'IBM Plex Mono',monospace;font-weight:700;background:var(--paper);color:var(--ink-soft);}
+table.dysko input{width:56px;text-align:center;font-family:'IBM Plex Mono',monospace;padding:4px 3px;border:1px solid var(--line);border-radius:5px;}
+table.dysko tr.footer td{font-weight:700;border-top:2px solid var(--forest);font-family:'IBM Plex Mono',monospace;color:var(--forest-dark);}
+
+.btn-primary{background:var(--forest);color:#fff;border:none;border-radius:8px;padding:13px 26px; font-weight:600;font-size:15px;cursor:pointer;font-family:'Work Sans',sans-serif; box-shadow:var(--shadow);}
+.btn-primary:hover{background:var(--forest-dark);}
+.btn-secondary{background:#fff;color:var(--forest-dark);border:1px solid var(--forest);border-radius:8px;padding:11px 20px; font-weight:600;font-size:14px;cursor:pointer;font-family:'Work Sans',sans-serif;}
+.btn-secondary:hover{background:var(--green-soft);}
+.actions-bar{display:flex;gap:12px;justify-content:center;margin:26px 0;flex-wrap:wrap;}
+
+#results{display:none;}
+.stamp{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-weight:700; font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:0.03em;border:2px solid; transform:rotate(-1deg);}
+.stamp.ok{background:var(--green-soft);border-color:var(--forest);color:var(--forest-dark);}
+.stamp.bad{background:var(--brick-soft);border-color:var(--brick);color:var(--brick);}
+.warn-box{background:var(--brick-soft);border:1px solid var(--brick);border-radius:8px;padding:12px 14px;margin-bottom:14px; font-size:13.5px;color:#5C2419;}
+.warn-box b{display:block;margin-bottom:4px;}
+.warn-box ul{margin:4px 0 0;padding-left:18px;}
+.note-box{background:var(--ochre-soft);border:1px solid var(--ochre);border-radius:8px;padding:12px 14px;margin-bottom:14px; font-size:13.5px;color:#5A3E10;}
+.note-box ul{margin:4px 0 0;padding-left:18px;}
+
+table.alloc{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+table.alloc th{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);color:var(--ink-soft);font-weight:600;font-size:11px; text-transform:uppercase;letter-spacing:0.03em;}
+table.alloc th:first-child,table.alloc td:first-child{text-align:left;}
+table.alloc td{padding:5px 8px;border-bottom:1px solid var(--line-soft);text-align:right;}
+table.alloc tr:last-child td{border-bottom:none;}
+table.alloc input[type=number]{width:64px;padding:4px 6px;font-size:13px;text-align:right;}
+table.alloc tfoot td{font-weight:700;border-top:1px solid var(--line);padding-top:8px;}
+.diff-ok{color:var(--forest-dark);}
+.diff-bad{color:var(--brick);font-weight:700;}
+
+.bucket-title{display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px;flex-wrap:wrap;gap:6px;}
+.bucket-title h3{font-family:'Fraunces',serif;font-size:15.5px;margin:0;color:var(--forest-dark);}
+.bucket-target{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);}
+
+.recon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px;}
+.recon-cell{border:1px solid var(--line-soft);border-radius:6px;padding:6px 8px;text-align:center;font-family:'IBM Plex Mono',monospace;}
+.recon-cell .rd{font-size:11px;color:var(--ink-soft);}
+.recon-cell .rv{font-weight:700;font-size:14px;}
+.recon-cell.ok .rv{color:var(--forest-dark);}
+.recon-cell.bad{background:var(--brick-soft);border-color:var(--brick);}
+.recon-cell.bad .rv{color:var(--brick);}
+
+.rounding-row{display:flex;align-items:center;gap:10px;margin:10px 0 4px;flex-wrap:wrap;}
+.rounding-row label{margin:0;text-transform:none;font-weight:600;color:var(--ink);font-size:13.5px;}
+
+footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:30px;}
+
+/* ---- Responsive / mobile ---- */
+@media(max-width:640px){
+  .wrap{padding:18px 12px 90px;}
+  .top{gap:12px;margin-bottom:20px;padding-bottom:14px;}
+  .top img{height:40px;}
+  .top-text h1{font-size:21px;}
+  .section-head{padding:14px 16px 12px;}
+  .section-body{padding:16px 16px 18px;}
+  .grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr 1fr;}
+  table.denomtable input[type=number]{width:64px;}
+  .bt-row{grid-template-columns:1fr 84px 34px;gap:6px;}
+  table.bktable{font-size:12.5px;}
+  table.dysko{font-size:12px;}
+  .recon-grid{grid-template-columns:repeat(3,1fr);}
+  .actions-bar{flex-direction:column;}
+  .actions-bar .btn-primary, .actions-bar .btn-secondary{width:100%;}
+}
+@media(max-width:400px){
+  .grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <img src="https://www.skautskyinstitut.cz/assets/images/logo.svg" alt="Skautský institut" onerror="this.style.display='none'">
+    <div class="top-text">
+      <h1>Počítání kasy — Rybárna</h1>
+      <p>E-výčetka rozpočítávající základ, tržby a dýška po konci směny</p>
+    </div>
+  </div>
+
+  <!-- 1. Základní údaje -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">01</span><h2>Základní údaje směny</h2></div>
+    <div class="section-body">
+      <div class="grid cols-4">
+        <div>
+          <label for="f-date">Datum</label>
+          <div class="date-field">
+            <input type="text" class="date-display" id="f-date-text" readonly>
+            <input type="date" id="f-date">
+          </div>
+        </div>
+        <div>
+          <label>Typ směny</label>
+          <div class="toggle-row" id="tg-typ">
+            <button type="button" class="toggle-btn active" data-val="denní">Denní</button>
+            <button type="button" class="toggle-btn" data-val="večerní">Večerní</button>
+          </div>
+        </div>
+        <div>
+          <label>Kasa</label>
+          <div class="toggle-row" id="tg-kasa">
+            <button type="button" class="toggle-btn active" data-val="1">Kasa 1</button>
+            <button type="button" class="toggle-btn" data-val="2">Kasa 2</button>
+          </div>
+        </div>
+        <div>
+          <label for="f-counter">Kasu počítá</label>
+          <input type="text" id="f-counter" placeholder="Jméno">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Barmani -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">02</span><h2>Barmani na směně</h2></div>
+    <div class="section-body">
+      <p class="hint">Zadej jména a počty hodin na směně.</p>
+      <div id="bt-list"></div>
+      <button type="button" class="add-link" onclick="addBartender()">+ přidat barmana</button>
+    </div>
+  </div>
+
+  <!-- 3. Tržba -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">03</span><h2>Tržba (z uzávěrky)</h2></div>
+    <div class="section-body">
+      <p class="hint">Stačí opsat z uzávěrky. Tržba z karty může obsahovat desetinná čísla.</p>
+      <div class="grid cols-3">
+        <div><label for="f-cash">Hotově (Kč)</label><input type="text" inputmode="decimal" id="f-cash" value="0"></div>
+        <div><label for="f-card">Kartou (Kč)</label><input type="text" inputmode="decimal" id="f-card" value="0"></div>
+        <div><label>Celkem</label><input type="text" id="f-total" disabled value="0 Kč"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Rozpis kasy -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">04</span><h2>Co je aktuálně v kase</h2></div>
+    <div class="section-body">
+      <p class="hint">Sepiš počet kusů jednotlivých bankovek a mincí, které máš teď fyzicky v kase. Základ oddělíme až následně.</p>
+      <table class="denomtable">
+        <thead><tr><th>Hodnota bankovek</th><th>Počet ks</th><th>Součet</th></tr></thead>
+        <tbody id="dg-notes"></tbody>
+        <thead><tr><th>Hodnota mincí</th><th>Počet ks</th><th>Součet</th></tr></thead>
+        <tbody id="dg-coins"></tbody>
+        <tfoot><tr class="total"><td>Celkem v kase</td><td></td><td class="v" id="inv-total">0 Kč</td></tr></tfoot>
+      </table>
+      <div class="grid cols-2" style="margin-top:16px;max-width:340px;">
+        <div>
+          <label>Zaokrouhlení dýšek</label>
+          <div class="toggle-row" id="tg-round">
+            <button type="button" class="toggle-btn" data-val="1">Na 1 Kč</button>
+            <button type="button" class="toggle-btn active" data-val="5">Na 5 Kč</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions-bar">
+    <button class="btn-primary" onclick="runCalculation()">Spočítat rozdělení</button>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="section">
+      <div class="section-head"><span class="section-num">05</span><h2>Návrh rozdělení</h2></div>
+      <div class="section-body">
+        <div id="result-notes"></div>
+        <div class="bucket-grid">
+          <div class="bucket" id="bucket-zaklad"></div>
+          <div class="bucket" id="bucket-trzba"></div>
+        </div>
+        <div class="bucket-grid" style="margin-top:18px;">
+          <div class="bucket" id="bucket-obalka"></div>
+          <div></div>
+        </div>
+        <div class="dysko-wrap">
+          <h3 style="font-family:'Fraunces',serif;font-size:15.5px;margin:0 0 8px;color:var(--forest-dark);">Dýška podle hodin</h3>
+          <table class="dysko" id="dysko-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><span class="section-num">06</span><h2>Kontrola součtu podle kase</h2></div>
+      <div class="section-body" id="recon-body"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><span class="section-num">07</span><h2>Poznámka ke směně</h2></div>
+      <div class="section-body">
+        <textarea id="f-comment" placeholder="Jak se vedlo na směně, případně problémy při počítání kasy…"></textarea>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn-secondary" onclick="runCalculation()">Přepočítat</button>
+      <button class="btn-primary" onclick="exportPDF()">Stáhnout výčetku (PDF)</button>
+    </div>
+  </div>
+
+  <footer class="credit">Skautský institut v Rybárně — interní nástroj pro počítání kasy. &copy; 2026</footer>
+</div>
+
+<div style="height:0;overflow:hidden;">
+  <div id="pdf-root" style="width:780px;"></div>
+</div>
+
+<script>
+/* ===================== CONSTANTS ===================== */
+const BANKNOTES = [5000,2000,1000,500,200,100];
+const COINS = [50,20,10,5,2,1];
+const ALL_DENOMS = [...BANKNOTES, ...COINS];
+const ZAKLAD_TARGET = {500:6,200:5,100:5,50:20,20:20,10:20,5:20,2:20,1:20};
+const UNCERTAIN_NOTES = new Set([1000,2000,5000]);
+// Note-to-note resize patterns (flexible, no x10 rule — banknotes only, value-preserving)
+const NOTE_BREAKS = {
+  5000:[{1000:5},{500:10},{2000:2,1000:1}],
+  2000:[{1000:2},{500:4}],
+  1000:[{500:2},{200:5},{100:10}],
+  500: [{200:2,100:1},{100:5}],
+  200: [{100:2}],
+};
+
+let bartenders = [];
+let btSeq = 0;
+let typSmeny = 'denní';
+let kasaCislo = '1';
+let roundGranularity = 5;
+let lastCalc = null;
+
+/* ===================== FORMATTING HELPERS ===================== */
+function fmt(n){ return new Intl.NumberFormat('cs-CZ').format(Math.round(n)); }
+function kc(n){ return fmt(n) + ' Kč'; }
+function kcDec(n){ return n.toLocaleString('cs-CZ', {minimumFractionDigits:(n%1!==0)?2:0, maximumFractionDigits:2}) + ' Kč'; }
+function parseCzech(str){
+  if(str===undefined||str===null) return 0;
+  const cleaned = String(str).replace(/\s/g,'').replace(',', '.');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fmtHours(n){ return Number(n).toLocaleString('cs-CZ', {maximumFractionDigits:2}); }
+
+/* ===================== CORE MONEY ALGORITHM ===================== */
+function cloneCounts(o){ const r={}; for(const d of ALL_DENOMS) r[d]=o[d]||0; return r; }
+function valueOf(c){ let v=0; for(const d of ALL_DENOMS) v+=(c[d]||0)*d; return v; }
+function sub(a,b){ const r=cloneCounts(a); for(const d of ALL_DENOMS) r[d]-=(b[d]||0); return r; }
+function poolKey(c){ return ALL_DENOMS.map(d=>c[d]||0).join('.'); }
+
+function minPieceComposeReal(amount, pool){
+  amount = Math.round(amount);
+  if(amount===0) return {pieces:{}, total:0};
+  if(amount<0) return null;
+  const dp = new Array(amount+1).fill(Infinity);
+  const parent = new Array(amount+1).fill(null);
+  dp[0]=0;
+  for(const d of ALL_DENOMS){
+    let avail = pool[d]||0;
+    if(avail<=0||d>amount) continue;
+    let remaining=avail, k=1;
+    while(remaining>0){
+      const use=Math.min(k,remaining), itemVal=d*use;
+      for(let a=amount;a>=itemVal;a--){
+        if(dp[a-itemVal]+use<dp[a]){ dp[a]=dp[a-itemVal]+use; parent[a]={prev:a-itemVal,denom:d,count:use}; }
+      }
+      remaining-=use; k*=2;
+    }
+  }
+  if(dp[amount]===Infinity) return null;
+  const pieces={}; let a=amount;
+  while(a>0){ const p=parent[a]; pieces[p.denom]=(pieces[p.denom]||0)+p.count; a=p.prev; }
+  return {pieces, total:dp[amount]};
+}
+
+// Legal rozměna moves from a pool state:
+// A) note -> other notes, flexible combos (no x10 rule)
+// B) coin batch: give any combo worth exactly 10*d, take exactly 10 pieces of coin d
+function* moves(pool){
+  for(const L of BANKNOTES){
+    if((pool[L]||0) < 1) continue;
+    const patterns = NOTE_BREAKS[L];
+    if(!patterns) continue;
+    for(const pattern of patterns){
+      const np = cloneCounts(pool);
+      np[L]-=1;
+      for(const [d2,c2] of Object.entries(pattern)) np[d2]=(np[d2]||0)+Number(c2);
+      yield {pool:np, step:{give:{[L]:1}, take:pattern, kind:'note', uncertain:UNCERTAIN_NOTES.has(L)}};
+    }
+  }
+  for(const d of COINS){
+    const needVal = 10*d;
+    const give = minPieceComposeReal(needVal, pool);
+    if(!give) continue;
+    const np = sub(pool, give.pieces);
+    np[d] = (np[d]||0) + 10;
+    yield {pool:np, step:{give:give.pieces, take:{[d]:10}, kind:'coin', uncertain:false}};
+  }
+}
+
+function reshapeBFS(startPool, isDone, maxDepth=3){
+  if(isDone(startPool)) return {pool:startPool, breaks:[]};
+  const seen = new Set([poolKey(startPool)]);
+  let queue = [{pool:startPool, breaks:[]}];
+  for(let depth=0; depth<maxDepth; depth++){
+    const next = [];
+    for(const node of queue){
+      for(const mv of moves(node.pool)){
+        const key = poolKey(mv.pool);
+        if(seen.has(key)) continue;
+        seen.add(key);
+        const breaks = [...node.breaks, mv.step];
+        if(isDone(mv.pool)) return {pool:mv.pool, breaks};
+        next.push({pool:mv.pool, breaks});
+      }
+    }
+    queue = next;
+    if(!queue.length) break;
+  }
+  return null;
+}
+
+function composeAmount(amount, poolIn, maxDepth=3){
+  const pool = cloneCounts(poolIn);
+  amount = Math.round(amount);
+  if(amount<=0) return {ok:true, pieces:{}, breaks:[], leftoverPool:pool};
+  if(valueOf(pool) < amount) return {ok:false, reason:'shortage', missing: amount-valueOf(pool)};
+  const isDone = p => !!minPieceComposeReal(amount, p);
+  const res = reshapeBFS(pool, isDone, maxDepth);
+  if(!res) return {ok:false, reason:'cannot_reshape'};
+  const finalPieces = minPieceComposeReal(amount, res.pool);
+  return {ok:true, pieces:finalPieces.pieces, breaks:res.breaks, leftoverPool: sub(res.pool, finalPieces.pieces)};
+}
+
+function composeZaklad(poolIn, maxDepth=3){
+  let pool = cloneCounts(poolIn);
+  const zaklad = {};
+  const shortages = [];
+  const subLog = [];
+  for(const d of [500,200,100,50,20,10,5,2,1]){
+    const target = ZAKLAD_TARGET[d];
+    if((pool[d]||0) < target){
+      const isDone = p => (p[d]||0) >= target;
+      const res = reshapeBFS(pool, isDone, maxDepth);
+      if(res){
+        pool = res.pool;
+        if(res.breaks.length) subLog.push({forDenom:d, breaks:res.breaks});
+      }
+    }
+    const take = Math.min(target, pool[d]||0);
+    zaklad[d]=take; pool[d]-=take;
+    if(take<target) shortages.push({denom:d, missing:target-take});
+  }
+  return {zaklad, poolAfter:pool, shortages, subLog};
+}
+
+function describePieces(p){
+  return Object.entries(p).filter(([,c])=>c>0).map(([d,c])=>`${c}× ${fmt(d)} Kč`).join(' + ');
+}
+
+/* ===================== UI BOOTSTRAP ===================== */
+function buildDenomInputs(){
+  const notesEl = document.getElementById('dg-notes');
+  const coinsEl = document.getElementById('dg-coins');
+  BANKNOTES.forEach(d=> notesEl.insertAdjacentHTML('beforeend', denomRowHTML(d)));
+  COINS.forEach(d=> coinsEl.insertAdjacentHTML('beforeend', denomRowHTML(d)));
+  updateInventoryTotal();
+}
+function denomRowHTML(d){
+  return `<tr>
+    <td>${fmt(d)} Kč</td>
+    <td><input type="number" min="0" step="1" value="0" id="inv-${d}" oninput="if(this.value<0)this.value=0;updateInventoryTotal()"></td>
+    <td class="v" id="inv-${d}-kc">0 Kč</td>
+  </tr>`;
+}
+function updateInventoryTotal(){
+  let total = 0;
+  ALL_DENOMS.forEach(d=>{
+    const el = document.getElementById('inv-'+d);
+    const ks = el ? (Number(el.value)||0) : 0;
+    total += ks*d;
+    const kcCell = document.getElementById(`inv-${d}-kc`);
+    if(kcCell) kcCell.textContent = kc(ks*d);
+  });
+  const totalEl = document.getElementById('inv-total');
+  if(totalEl) totalEl.textContent = kc(total);
+}
+
+function addBartender(name='', hours=''){
+  const id = 'bt' + (btSeq++);
+  bartenders.push({id, name, hours});
+  renderBartenders();
+}
+function removeBartender(id){ bartenders = bartenders.filter(b=>b.id!==id); renderBartenders(); }
+function renderBartenders(){
+  const el = document.getElementById('bt-list');
+  el.innerHTML = bartenders.map(b=>`
+    <div class="bt-row">
+      <div><label>Jméno</label><input type="text" value="${escapeHtml(b.name)}" oninput="updateBartender('${b.id}','name',this.value)"></div>
+      <div><label>Hodiny</label><input type="text" inputmode="decimal" value="${b.hours}" placeholder="7,5" oninput="updateBartender('${b.id}','hours',this.value)"></div>
+      <button type="button" class="icon-btn" title="Odebrat" onclick="removeBartender('${b.id}')">×</button>
+    </div>`).join('');
+}
+function updateBartender(id,field,val){ const b = bartenders.find(x=>x.id===id); if(b) b[field]=val; }
+
+function setupToggle(containerId, onChange){
+  const cont = document.getElementById(containerId);
+  cont.querySelectorAll('.toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      cont.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(btn.dataset.val);
+    });
+  });
+}
+
+function updateDateDisplay(){
+  const val = document.getElementById('f-date').value;
+  if(!val){ document.getElementById('f-date-text').value=''; return; }
+  const [y,m,d] = val.split('-');
+  document.getElementById('f-date-text').value = `${d}.${m}.${y}`;
+}
+
+function updateTotals(){
+  const cash = parseCzech(document.getElementById('f-cash').value);
+  const card = parseCzech(document.getElementById('f-card').value);
+  document.getElementById('f-total').value = kcDec(cash+card);
+}
+
+/* ===================== MAIN CALCULATION ===================== */
+function runCalculation(){
+  const inventory = {};
+  ALL_DENOMS.forEach(d=>{ inventory[d] = Number(document.getElementById('inv-'+d).value) || 0; });
+  const inventoryValue = valueOf(inventory);
+
+  const cashRaw = parseCzech(document.getElementById('f-cash').value);
+  const cash = Math.round(cashRaw); // physical cash always lands on whole crowns
+  const card = parseCzech(document.getElementById('f-card').value);
+
+  const validBartenders = bartenders
+    .map(b=>({...b, hours:parseCzech(b.hours), name:(b.name||'').trim()}))
+    .filter(b=>b.name && b.hours>0);
+
+  const errors = [];
+  if(validBartenders.length === 0) errors.push('Zadej alespoň jednoho barmana se jménem a odpracovanými hodinami.');
+
+  // 1. Základ (strict target composition, rozměna only when genuinely needed)
+  const zStep = composeZaklad(inventory);
+  let pool = zStep.poolAfter;
+  const rozmenaLog = [];
+  zStep.subLog.forEach(s => rozmenaLog.push(...s.breaks.map(b=>({...b, context:'základ'}))));
+
+  // 2. Tržba je odvozená jako "zbytek zbytku": nejdřív poskládáme co nejúsporněji (nejméně kusů)
+  //    tu část, která půjde do obálky a dýšek, a tržba dostane to, co po tomto výběru zbyde.
+  //    Díky tomu končí drobné spíš v tržbě než v osobních hromádkách barmanů.
+  let trzbaResult = {ok:true, pieces:{}, breaks:[], leftoverPool: pool};
+  let stopHere = false;
+  const poolValue = valueOf(pool);
+  const zbytekTarget = poolValue - cash;
+
+  if(zbytekTarget < 0){
+    errors.push(`Nelze poskládat tržbu ${kc(cash)} — v kase po odečtení základu chybí ${kc(-zbytekTarget)} (možné manko).`);
+    stopHere = true;
+  } else if(cash > 0){
+    const zRes = composeAmount(zbytekTarget, pool);
+    if(!zRes.ok){
+      errors.push(`Nelze rozdělit peníze mezi tržbu a zbytek (obálku/dýška) ani po rozměnění. Zkontroluj zadání nebo rozděl ručně.`);
+      stopHere = true;
+    } else {
+      // zRes.pieces = úsporná skladba pro obálku+dýška; co zbyde v poolu (leftoverPool) je tržba
+      trzbaResult = {ok:true, pieces: zRes.leftoverPool, breaks: zRes.breaks, leftoverPool: zRes.pieces};
+      rozmenaLog.push(...zRes.breaks.map(b=>({...b, context:'tržba/zbytek'})));
+    }
+  }
+  if(!stopHere){
+    pool = trzbaResult.leftoverPool; // the "good" (piece-minimized) pool destined for obálka+dýška
+  }
+
+  // 3. Obálka (10 %) a dýška (90 %)
+  let obalkaAmount = 0, obalkaResult = {ok:true, pieces:{}, breaks:[]};
+  let dyskySplit = [];
+  let dyskyPool = 0;
+
+  if(!stopHere){
+    const zbytekValue = valueOf(pool);
+    obalkaAmount = Math.round(zbytekValue*0.10);
+    obalkaResult = composeAmount(obalkaAmount, pool);
+    if(!obalkaResult.ok){
+      errors.push(`Nelze poskládat obálku na 10 % dýšek (${kc(obalkaAmount)}) z dostupných peněz — doplň ručně.`);
+    } else {
+      pool = obalkaResult.leftoverPool;
+      rozmenaLog.push(...obalkaResult.breaks.map(b=>({...b, context:'obálka'})));
+    }
+    dyskyPool = valueOf(pool);
+
+    if(validBartenders.length > 0 && dyskyPool >= 0){
+      const totalHours = validBartenders.reduce((s,b)=>s+b.hours,0);
+      const raw = validBartenders.map(b => dyskyPool * b.hours / totalHours);
+      const rounded = raw.map(v => Math.round(v/roundGranularity)*roundGranularity);
+      const diff = Math.round(dyskyPool - rounded.reduce((a,b)=>a+b,0));
+      if(diff !== 0){
+        const order = raw.map((v,i)=>({i, delta:Math.abs(v-rounded[i])})).sort((a,b)=>a.delta-b.delta);
+        rounded[order[0].i] += diff; // celý zbytek jde tomu, kdo měl nejtěsnější zaokrouhlení
+      }
+      dyskySplit = validBartenders.map((b,i)=>({...b, amount: rounded[i]}));
+    }
+  }
+
+  // 4. Physical piece allocation for dýška (bigger amounts first, reduces fragmentation)
+  const dyskyAllocated = [];
+  const sortedForAlloc = [...dyskySplit].sort((a,b)=>b.amount-a.amount);
+  for(const b of sortedForAlloc){
+    let alloc = {ok:true, pieces:{}, breaks:[]};
+    if(b.amount > 0){
+      alloc = composeAmount(b.amount, pool);
+      if(alloc.ok){
+        pool = alloc.leftoverPool;
+        rozmenaLog.push(...alloc.breaks.map(x=>({...x, context:`dýško — ${b.name}`})));
+      } else {
+        errors.push(`Nelze poskládat dýšku pro ${b.name} (${kc(b.amount)}) — doplň ručně.`);
+      }
+    }
+    dyskyAllocated.push({...b, pieces: alloc.ok ? alloc.pieces : {}});
+  }
+  dyskyAllocated.sort((a,b)=> validBartenders.findIndex(x=>x.id===a.id) - validBartenders.findIndex(x=>x.id===b.id));
+
+  // adjusted inventory = original inventory with every rozměna move physically applied
+  // (this is what the till should actually look like once all suggested exchanges are done)
+  let adjustedInventory = cloneCounts(inventory);
+  rozmenaLog.forEach(brk=>{
+    Object.entries(brk.give).forEach(([d,c])=>{ adjustedInventory[d]-=Number(c); });
+    Object.entries(brk.take).forEach(([d,c])=>{ adjustedInventory[d]=(adjustedInventory[d]||0)+Number(c); });
+  });
+
+  lastCalc = {
+    inventory, adjustedInventory, inventoryValue, cash, card,
+    zaklad: zStep.zaklad, zakladShortages: zStep.shortages,
+    trzba: trzbaResult.ok ? trzbaResult.pieces : {},
+    obalka: obalkaResult.ok ? obalkaResult.pieces : {}, obalkaAmount,
+    dysky: dyskyAllocated, dyskyPool,
+    rozmenaLog, errors, stopHere,
+    meta: {
+      date: document.getElementById('f-date-text').value,
+      counter: document.getElementById('f-counter').value
+    }
+  };
+
+  renderResults(lastCalc);
+}
+
+/* ===================== RENDER RESULTS ===================== */
+function renderBucket(elId, label, bucketKey, targetKc){
+  const el = document.getElementById(elId);
+  const pieces = window.allocState[bucketKey];
+  const isZaklad = bucketKey==='zaklad';
+  const rows = isZaklad ? [500,200,100,50,20,10,5,2,1] : ALL_DENOMS.filter(d=>(pieces[d]||0)>0);
+  el.innerHTML = `
+    <div class="bucket-head"><h3>${label}</h3><span class="target">cíl: ${kc(targetKc)}</span></div>
+    <table class="bktable">
+      ${rows.map(d=>`
+        <tr>
+          <td class="d">${fmt(d)} Kč</td>
+          <td class="i"><input type="number" min="0" step="1" class="bk-input" data-bucket="${bucketKey}" data-denom="${d}" value="${pieces[d]||0}"></td>
+          <td class="v" id="bkval-${bucketKey}-${d}">${kc((pieces[d]||0)*d)}</td>
+        </tr>`).join('')}
+    </table>
+    <div class="bucket-foot"><span>Součet</span><span id="bksum-${bucketKey}">${kc(sumPieces(pieces))}</span></div>
+  `;
+  el.querySelectorAll('.bk-input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const bk=e.target.dataset.bucket, d=e.target.dataset.denom;
+      window.allocState[bk][d] = parseInt(e.target.value)||0;
+      document.getElementById(`bkval-${bk}-${d}`).textContent = kc(window.allocState[bk][d]*d);
+      document.getElementById(`bksum-${bk}`).textContent = kc(sumPieces(window.allocState[bk]));
+      recalcReconciliation();
+    });
+  });
+}
+function sumPieces(pieces){ return Object.entries(pieces).reduce((s,[d,c])=>s+Number(d)*c,0); }
+
+function renderDyskoTable(){
+  const table = document.getElementById('dysko-table');
+  const barmani = lastCalc.dysky;
+  const keys = barmani.map(b=>'dysko_'+b.id);
+  const rows = ALL_DENOMS.filter(d => keys.some(k=>(window.allocState[k][d]||0)>0));
+  const thead = '<thead><tr><th>Hodnota</th>' + barmani.map(b=>`<th>${escapeHtml(b.name)}</th>`).join('') + '</tr></thead>';
+  const tbody = '<tbody>' + rows.map(d=>`
+    <tr>
+      <td class="d">${fmt(d)} Kč</td>
+      ${barmani.map(b=>`<td><input type="number" min="0" step="1" class="dy-input" data-bucket="dysko_${b.id}" data-denom="${d}" value="${window.allocState['dysko_'+b.id][d]||0}"></td>`).join('')}
+    </tr>`).join('') + '</tbody>';
+  const tfoot = '<tfoot><tr class="footer"><td>Součet</td>' + barmani.map(b=>`<td id="dyfoot-${b.id}">${kc(sumPieces(window.allocState['dysko_'+b.id]))}</td>`).join('') + '</tr></tfoot>';
+  table.innerHTML = thead+tbody+tfoot;
+  table.querySelectorAll('.dy-input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const bk=e.target.dataset.bucket, d=e.target.dataset.denom;
+      window.allocState[bk][d] = parseInt(e.target.value)||0;
+      const id = bk.replace('dysko_','');
+      document.getElementById('dyfoot-'+id).textContent = kc(sumPieces(window.allocState[bk]));
+      recalcReconciliation();
+    });
+  });
+}
+
+function renderResults(calc){
+  let notesHtml = '';
+  if(calc.errors.length){
+    notesHtml += `<div class="warn-box"><b>Nesrovnalosti — je potřeba ruční kontrola:</b><ul>${calc.errors.map(e=>`<li>${e}</li>`).join('')}</ul></div>`;
+  }
+  if(calc.zakladShortages.length){
+    notesHtml += `<div class="warn-box"><b>Základ nešlo poskládat přesně:</b><ul>${calc.zakladShortages.map(s=>`<li>Chybí ${s.missing}× ${fmt(s.denom)} Kč</li>`).join('')}</ul></div>`;
+  }
+  if(calc.rozmenaLog.length){
+    notesHtml += `<div class="note-box"><b>Potřebná rozměna:</b><ul>` +
+      calc.rozmenaLog.map(b=>`<li>Rozměň ${describePieces(b.give)} za ${describePieces(b.take)} <span style="opacity:.7">(${b.context})</span>${b.uncertain?' — <em>ověř dostupnost větších bankovek</em>':''}</li>`).join('') +
+      `</ul></div>`;
+  }
+  document.getElementById('result-notes').innerHTML = notesHtml;
+
+  window.allocState = { zaklad:{...calc.zaklad}, trzba:{...calc.trzba}, obalka:{...calc.obalka} };
+  calc.dysky.forEach(b=> window.allocState['dysko_'+b.id] = {...b.pieces});
+
+  const zakladTarget = Object.entries(ZAKLAD_TARGET).reduce((s,[d,c])=>s+Number(d)*c,0);
+  renderBucket('bucket-zaklad', 'Základ (zůstává v kase)', 'zaklad', zakladTarget);
+  renderBucket('bucket-trzba', 'Tržba hotově', 'trzba', calc.cash);
+  renderBucket('bucket-obalka', 'Obálka na 10 % dýšek', 'obalka', calc.obalkaAmount);
+  renderDyskoTable();
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+  recalcReconciliation();
+}
+
+function recalcReconciliation(){
+  if(!lastCalc) return;
+  const buckets = ['zaklad','trzba','obalka', ...lastCalc.dysky.map(b=>'dysko_'+b.id)];
+  const totals = {};
+  ALL_DENOMS.forEach(d=>totals[d]=0);
+  buckets.forEach(bk=> ALL_DENOMS.forEach(d=> totals[d] += (window.allocState[bk][d]||0)));
+  const el = document.getElementById('recon-body');
+  let allOk = true;
+  const cells = ALL_DENOMS.map(d=>{
+    const inKasa = lastCalc.adjustedInventory[d]||0;
+    const allocated = totals[d];
+    const diff = inKasa - allocated;
+    if(diff !== 0) allOk = false;
+    return `<div class="recon-cell ${diff===0?'ok':'bad'}"><div class="rd">${fmt(d)} Kč</div><div class="rv">${allocated}/${inKasa}</div></div>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="stamp ${allOk?'ok':'bad'}">${allOk ? '✓ SEDÍ' : '✕ NESEDÍ'}</div>
+    <p class="hint" style="margin-top:12px;">Počet přidělených ks / počet ks v kase po případné rozměně, pro každou hodnotu.</p>
+    <div class="recon-grid">${cells}</div>
+  `;
+}
+
+/* ===================== PDF EXPORT (direct download, no print dialog) ===================== */
+function exportPDF(){
+  if(!lastCalc){ alert('Nejdřív spočítej rozdělení.'); return; }
+
+  const date = document.getElementById('f-date-text').value || '—';
+  const counter = document.getElementById('f-counter').value || '—';
+  const comment = document.getElementById('f-comment').value || '';
+  const now = new Date();
+  const stamp = now.toLocaleString('cs-CZ');
+
+  const zbytek = lastCalc.dyskyPool + lastCalc.obalkaAmount;
+
+  const root = document.getElementById('pdf-root');
+  root.innerHTML = `
+    <div style="font-family:Georgia,serif;color:#2B2A25;padding:36px;">
+      <div style="border-bottom:3px solid #2F4B3C;padding-bottom:14px;margin-bottom:18px;">
+        <h1 style="font-size:22px;margin:0 0 4px;color:#213629;">Výčetka kasy — Rybárna</h1>
+      </div>
+
+      <table style="width:100%;font-size:13px;margin-bottom:18px;">
+        <tr><td style="padding:3px 8px 3px 0;color:#666;">Datum</td><td style="padding:3px;font-weight:bold;">${date}</td>
+            <td style="padding:3px 8px 3px 24px;color:#666;">Směna</td><td style="padding:3px;font-weight:bold;">${typSmeny}</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;color:#666;">Kasa</td><td style="padding:3px;font-weight:bold;">${kasaCislo}</td>
+            <td style="padding:3px 8px 3px 24px;color:#666;">Počítá</td><td style="padding:3px;font-weight:bold;">${escapeHtml(counter)}</td></tr>
+      </table>
+
+      <h3 style="font-size:14px;color:#213629;margin:0 0 6px;">Barmani na směně</h3>
+      <table style="width:100%;font-size:12px;margin-bottom:18px;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid #999;"><th style="text-align:left;padding:3px;">Jméno</th><th style="text-align:right;padding:3px;">Hodiny</th></tr>
+        ${lastCalc.dysky.map(b=>`<tr><td style="padding:3px;">${escapeHtml(b.name)}</td><td style="padding:3px;text-align:right;">${fmtHours(b.hours)} h</td></tr>`).join('')}
+      </table>
+
+      <table style="width:100%;margin-bottom:8px;"><tr>
+        <td style="width:50%;vertical-align:top;padding-right:14px;">
+          <h3 style="font-size:14px;color:#213629;margin:0 0 6px;">Tržba dle uzávěrky</h3>
+          <table style="width:100%;font-size:12px;">
+            <tr><td style="padding:3px;color:#666;">Hotově</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(lastCalc.cash)}</td></tr>
+            <tr><td style="padding:3px;color:#666;">Kartou</td><td style="padding:3px;text-align:right;font-weight:bold;">${kcDec(lastCalc.card)}</td></tr>
+            <tr style="border-top:1px solid #999;"><td style="padding:3px;color:#666;">Celkem</td><td style="padding:3px;text-align:right;font-weight:bold;">${kcDec(lastCalc.cash+lastCalc.card)}</td></tr>
+          </table>
+        </td>
+        <td style="width:50%;vertical-align:top;padding-left:14px;border-left:1px solid #ddd;">
+          <h3 style="font-size:14px;color:#213629;margin:0 0 6px;">Přebytek po oddělení tržby</h3>
+          <table style="width:100%;font-size:12px;">
+            <tr style="border-bottom:1px solid #999;"><td style="padding:3px;color:#666;">Zbylo celkem</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(zbytek)}</td></tr>
+            <tr><td style="padding:3px;color:#666;">90 % | bereme si</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(lastCalc.dyskyPool)}</td></tr>
+            <tr><td style="padding:3px;color:#666;">10 % | necháváme u tržby</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(lastCalc.obalkaAmount)}</td></tr>
+          </table>
+        </td>
+      </tr></table>
+
+      ${comment ? `<h3 style="font-size:14px;color:#213629;margin:18px 0 6px;">Poznámka</h3><p style="font-size:13px;white-space:pre-wrap;">${escapeHtml(comment)}</p>` : ''}
+
+      <div style="margin-top:26px;padding-top:10px;border-top:1px solid #ccc;font-size:10.5px;color:#999;">
+        Staženo: ${stamp}
+      </div>
+    </div>
+  `;
+
+  const opt = {
+    margin: 8,
+    filename: `vycetka_${date.replace(/\./g,'-')}_kasa${kasaCislo}_${typSmeny}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, scrollX: 0, scrollY: 0, windowWidth: document.documentElement.scrollWidth, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(root).save();
+}
+
+/* ===================== BOOTSTRAP ===================== */
+buildDenomInputs();
+addBartender();
+addBartender();
+addBartender();
+document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+updateDateDisplay();
+document.getElementById('f-date').addEventListener('change', updateDateDisplay);
+setupToggle('tg-typ', v => typSmeny = v);
+setupToggle('tg-kasa', v => kasaCislo = v);
+setupToggle('tg-round', v => roundGranularity = Number(v));
+document.getElementById('f-cash').addEventListener('input', updateTotals);
+document.getElementById('f-card').addEventListener('input', updateTotals);
+updateTotals();
+</script>
+</body>
+</html>
