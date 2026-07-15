@@ -1,2 +1,0 @@
-# rybarna
-Kalkulačka dýšek
