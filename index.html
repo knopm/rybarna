@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Počítání kasy — Rybárna</title>
+<title>Počítání kasy a výčetka — Rybárna</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
@@ -50,11 +51,18 @@ textarea{resize:vertical;min-height:70px;}
 .date-field input[type=date]{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;}
 
 .toggle-row{display:flex;gap:8px;}
-.toggle-btn{flex:1;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:var(--paper); cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink-soft);text-align:center; transition:all .12s ease;}
+.toggle-btn{flex:1 1 140px;padding:9px 12px;line-height:1.3;border:1px solid var(--line);border-radius:7px;background:var(--paper); cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink-soft);text-align:center; transition:all .12s ease;}
 .toggle-btn.active{background:var(--forest);border-color:var(--forest);color:#fff;}
 .toggle-btn:hover:not(.active){border-color:var(--forest);color:var(--forest-dark);}
 
-.bt-row{display:grid;grid-template-columns:1fr 110px 34px;gap:8px;align-items:end;margin-bottom:8px;}
+.field-block{margin-bottom:16px;}
+.field-block:last-child{margin-bottom:0;}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px,1fr));gap:14px 24px;}
+
+.bt-row{display:grid;grid-template-columns:36px 1fr 110px 34px;gap:8px;align-items:end;margin-bottom:8px;}
+.counter-icon{width:36px;height:36px;border:1px solid var(--line-strong,var(--line));border-radius:7px;background:#fff;color:var(--line-strong,#ccc);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s ease;font-size:16px;}
+.counter-icon:hover{border-color:var(--forest);color:var(--forest);}
+.counter-icon.active{background:var(--forest);border-color:var(--forest);color:#fff;}
 .bt-row label{margin-bottom:4px;}
 .icon-btn{width:34px;height:36px;border:1px solid var(--brick);color:var(--brick);background:#fff;border-radius:7px; cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;}
 .icon-btn:hover{background:var(--brick-soft);}
@@ -106,6 +114,27 @@ table.dysko tr.footer td{font-weight:700;border-top:2px solid var(--forest);font
 .note-box{background:var(--ochre-soft);border:1px solid var(--ochre);border-radius:8px;padding:12px 14px;margin-bottom:14px; font-size:13.5px;color:#5A3E10;}
 .note-box ul{margin:4px 0 0;padding-left:18px;}
 
+.rozmena-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(230px,1fr));
+  gap:18px 28px;
+  margin:12px auto 0;
+  max-width:620px;
+  justify-content:center;
+}
+@media(max-width:640px){
+  .rozmena-list{grid-template-columns:1fr;max-width:340px;}
+}
+.rozmena-row{display:flex;align-items:stretch;gap:8px;justify-self:center;}
+.rozmena-give{display:flex;align-items:center;justify-content:flex-end;text-align:right;font-weight:600;min-width:78px;line-height:1.5;}
+.rozmena-brace{width:14px;flex:0 0 14px;color:var(--ink-soft);}
+.rozmena-brace svg{height:100%;width:100%;display:block;}
+.rozmena-take{display:flex;flex-direction:column;justify-content:center;gap:3px;}
+.rozmena-take-line{line-height:1.4;white-space:nowrap;}
+.mince{display:inline-block;border:1.5px solid var(--ink-soft);border-radius:50%;padding:0 7px;}
+.bankovka{display:inline-block;border:1.5px solid var(--ink-soft);border-radius:3px;padding:0 7px;}
+.rozmena-flag{margin-left:2px;font-weight:700;color:var(--ochre);cursor:help;align-self:center;}
+
 table.alloc{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 table.alloc th{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);color:var(--ink-soft);font-weight:600;font-size:11px; text-transform:uppercase;letter-spacing:0.03em;}
 table.alloc th:first-child,table.alloc td:first-child{text-align:left;}
@@ -115,6 +144,66 @@ table.alloc input[type=number]{width:64px;padding:4px 6px;font-size:13px;text-al
 table.alloc tfoot td{font-weight:700;border-top:1px solid var(--line);padding-top:8px;}
 .diff-ok{color:var(--forest-dark);}
 .diff-bad{color:var(--brick);font-weight:700;}
+
+.advanced-settings{margin:4px 0 18px;}
+.advanced-settings summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.03em;padding:4px 0;list-style:none;}
+.advanced-settings summary::-webkit-details-marker{display:none;}
+.advanced-settings summary::before{content:'▸ ';font-size:10px;}
+.advanced-settings[open] summary::before{content:'▾ ';}
+.advanced-settings summary:hover{color:var(--forest-dark);}
+
+.password-gate{
+  position:fixed; inset:0; background:var(--paper,#F6F2E7); display:flex; align-items:center; justify-content:center;
+  z-index:2000; padding:20px;
+}
+.password-gate-box{
+  max-width:380px; width:100%; background:#fff; border:1px solid var(--line,#E5DDC8); border-radius:14px;
+  padding:32px 28px; text-align:center; box-shadow:0 12px 32px rgba(33,54,41,0.12);
+}
+.password-gate-box h2{font-family:'Fraunces',serif; font-size:20px; margin:0 0 10px; color:var(--forest-dark);}
+.password-gate-box p{font-size:13.5px; color:var(--ink-soft); margin:0 0 16px; line-height:1.5;}
+.password-gate-box input{
+  width:100%; padding:11px 14px; border:1px solid var(--line-strong,#ccc); border-radius:8px; font-size:15px;
+  text-align:center; letter-spacing:2px;
+}
+.gate-error{color:#B23B3B !important; font-size:12.5px !important; min-height:16px; margin:8px 0 0 !important;}
+.gate-bypass{
+  background:none; border:none; color:var(--ink-soft); font-size:11.5px; text-decoration:underline;
+  cursor:pointer; margin-top:18px; padding:0; line-height:1.4;
+}
+.gate-bypass:hover{color:var(--forest-dark);}
+
+.auth-badge{
+  position:fixed; top:10px; right:14px; z-index:500;
+  font-size:11.5px; color:var(--ink-soft);
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:20px; padding:4px 12px; cursor:pointer;
+  opacity:0.7; transition:opacity .15s ease; display:none;
+}
+.auth-badge:hover{opacity:1;}
+
+.save-reminder{
+  background:#FBF3DC; border:1px solid #E4CE8F; border-radius:10px; padding:12px 16px;
+  font-size:13.5px; color:#5C4A1E; margin:20px 0 12px; display:flex; align-items:center; gap:10px;
+}
+.save-reminder i{color:#B8901F; font-size:15px;}
+.encourage-toast{
+  position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+  background:var(--forest-dark); color:#fff; padding:13px 22px; border-radius:30px;
+  font-family:'Fraunces',serif; font-weight:600; font-size:15px; box-shadow:0 8px 24px rgba(33,54,41,0.35);
+  opacity:0; transition:opacity .25s ease, transform .25s ease; pointer-events:none; z-index:999;
+  max-width:88vw; text-align:center;
+}
+.encourage-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+.rating-row{margin-bottom:16px;}
+.rating-row label{margin-bottom:6px;}
+.rating-icons{max-width:340px;}
+.rating-icons button{display:flex; align-items:center; justify-content:center; gap:2px; padding:9px 4px; font-size:16px;}
+
+.stat-box{border:1px solid var(--line); border-radius:8px; padding:12px 14px; background:var(--bg);}
+.stat-box .stat-label{font-size:11.5px; text-transform:uppercase; letter-spacing:0.03em; color:var(--ink-soft); font-weight:600; margin-bottom:4px;}
+.stat-box .stat-value{font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600; color:var(--forest-dark);}
 
 .bucket-title{display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px;flex-wrap:wrap;gap:6px;}
 .bucket-title h3{font-family:'Fraunces',serif;font-size:15.5px;margin:0;color:var(--forest-dark);}
@@ -143,7 +232,7 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
   .section-body{padding:16px 16px 18px;}
   .grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr 1fr;}
   table.denomtable input[type=number]{width:64px;}
-  .bt-row{grid-template-columns:1fr 84px 34px;gap:6px;}
+  .bt-row{grid-template-columns:32px 1fr 84px 34px;gap:6px;}
   table.bktable{font-size:12.5px;}
   table.dysko{font-size:12px;}
   .recon-grid{grid-template-columns:repeat(3,1fr);}
@@ -156,21 +245,33 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
 </style>
 </head>
 <body>
-<div class="wrap">
+<div id="password-gate" class="password-gate">
+  <div class="password-gate-box">
+    <h2>Počítání kasy — Rybárna</h2>
+    <p>Tato aplikace je určená jen pro tým Rybárny. Zadej přístupové heslo:</p>
+    <input type="password" id="gate-password" placeholder="Heslo" onkeydown="if(event.key==='Enter') checkGatePassword()">
+    <button class="btn-primary" onclick="checkGatePassword()" style="width:100%;margin-top:10px;">Pokračovat</button>
+    <p id="gate-error" class="gate-error"></p>
+    <button class="gate-bypass" onclick="bypassGate()">Pokračovat bez hesla (pak nelze ukládat data do Tabulky)</button>
+  </div>
+</div>
+<div class="wrap" id="main-wrap" style="display:none;">
+
+  <div id="auth-badge" class="auth-badge"></div>
 
   <div class="top">
     <img src="https://www.skautskyinstitut.cz/assets/images/logo.svg" alt="Skautský institut" onerror="this.style.display='none'">
     <div class="top-text">
       <h1>Počítání kasy — Rybárna</h1>
-      <p>E-výčetka rozpočítávající základ, tržby a dýška po konci směny</p>
+      <p>Kalkulačka k rozpočítání tržby, dýšek a základu po konci směny</p>
     </div>
   </div>
 
   <!-- 1. Základní údaje -->
   <div class="section">
-    <div class="section-head"><span class="section-num">01</span><h2>Základní údaje směny</h2></div>
+    <div class="section-head"><span class="section-num">01</span><h2>Základní údaje o směně</h2></div>
     <div class="section-body">
-      <div class="grid cols-4">
+      <div class="grid cols-3">
         <div>
           <label for="f-date">Datum</label>
           <div class="date-field">
@@ -192,11 +293,8 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
             <button type="button" class="toggle-btn" data-val="2">Kasa 2</button>
           </div>
         </div>
-        <div>
-          <label for="f-counter">Kasu počítá</label>
-          <input type="text" id="f-counter" placeholder="Jméno">
-        </div>
       </div>
+      <input type="hidden" id="f-counter">
     </div>
   </div>
 
@@ -204,15 +302,19 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
   <div class="section">
     <div class="section-head"><span class="section-num">02</span><h2>Barmanx na směně</h2></div>
     <div class="section-body">
-      <p class="hint">Zadej jména a počty hodin strávených na směně.</p>
+      <p class="hint">Zadej jména a odpracované hodiny. Klikni na ikonku <i class="fa-regular fa-hand"></i> vlevo u svého jména (nebo toho, kdo dnes počítá kasu).</p>
       <div id="bt-list"></div>
-      <button type="button" class="add-link" onclick="addBartender()">+ přidat barmana</button>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+        <button type="button" class="add-link" onclick="addBartender()">+ přidat barmanx</button>
+        <button type="button" class="add-link" onclick="importFromSchedule()">↻ načíst z tabulky směn</button>
+      </div>
+      <p id="schedule-status" class="hint" style="margin-top:8px;margin-bottom:0;"></p>
     </div>
   </div>
 
   <!-- 3. Tržba -->
   <div class="section">
-    <div class="section-head"><span class="section-num">03</span><h2>Tržba (z uzávěrky)</h2></div>
+    <div class="section-head"><span class="section-num">03</span><h2>Tržba</h2></div>
     <div class="section-body">
       <p class="hint">Stačí opsat z uzávěrky.</p>
       <div class="grid cols-3">
@@ -227,8 +329,37 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
   <div class="section">
     <div class="section-head"><span class="section-num">04</span><h2>Co je aktuálně v kase</h2></div>
     <div class="section-body">
-      <p class="hint">Počet kusů jednotlivých bankovek a mincí, které máš teď fyzicky v kase.</p>
-      <div class="denom-sub">Bankovky</div>
+      <p class="hint">Počet kusů jednotlivých bankovek a mincí, které máš teď fyzicky k dispozici.</p>
+      <details class="advanced-settings">
+        <summary>Pokročilá nastavení</summary>
+        <div style="margin:14px 0 4px;max-width:760px;">
+          <div class="field-block">
+            <label>Zadaná čísla jsou</label>
+            <div class="toggle-row" id="tg-zaklad-mode">
+              <button type="button" class="toggle-btn" data-val="both">Bez základu i tržby</button>
+              <button type="button" class="toggle-btn active" data-val="separated">Po oddělení základu</button>
+              <button type="button" class="toggle-btn" data-val="needs">Ještě je potřeba oddělit</button>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <div class="field-block">
+              <label>Dýška</label>
+              <div class="toggle-row" id="tg-round">
+                <button type="button" class="toggle-btn" data-val="presne">Přesně (i za cenu více kusů)</button>
+                <button type="button" class="toggle-btn active" data-val="usporne">Úsporně (méně kusů, drobně zaokrouhleno)</button>
+              </div>
+            </div>
+            <div id="wrap-zaklad-tolerance" class="field-block" style="display:none;">
+              <label>Skladba základu</label>
+              <div class="toggle-row" id="tg-zaklad-tolerance">
+                <button type="button" class="toggle-btn active" data-val="strict">Přesně dle ideálu</button>
+                <button type="button" class="toggle-btn" data-val="tolerant">Povolit drobnou odchylku (méně rozměny)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="hint" style="margin:12px 0 0;">Výchozí nastavení ("Úsporně") z testů vychází jako nejlepší volba — měň jen, pokud víš proč (nebo máš chuť experimentovat). Drobné z obálky může aplikace automaticky přesunout do tržby, pokud to pomůže vyhnout se rozměně — vždy na to upozorní.</p>
+      </details>
       <table class="denomtable">
         <thead><tr><th>Hodnota bankovek</th><th>Počet ks</th><th>Součet</th></tr></thead>
         <tbody id="dg-notes"></tbody>
@@ -236,24 +367,6 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
         <tbody id="dg-coins"></tbody>
         <tfoot><tr class="total"><td>Celkem v kase</td><td></td><td class="v" id="inv-total">0 Kč</td></tr></tfoot>
       </table>
-      <div class="grid cols-2" style="margin-top:16px;max-width:520px;">
-        <div>
-          <label>Zadaná čísla jsou</label>
-          <div class="toggle-row" id="tg-zaklad-mode">
-            <button type="button" class="toggle-btn active" data-val="separated">Po oddělení základu</button>
-            <button type="button" class="toggle-btn" data-val="needs">Ještě je potřeba oddělit</button>
-          </div>
-        </div>
-      </div>
-      <div class="grid cols-2" style="margin-top:16px;max-width:340px;">
-        <div>
-          <label>Zaokrouhlení dýšek</label>
-          <div class="toggle-row" id="tg-round">
-            <button type="button" class="toggle-btn active" data-val="1">Na 1 Kč</button>
-            <button type="button" class="toggle-btn" data-val="5">Na 5 Kč</button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -273,35 +386,111 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
         </div>
         <div class="bucket-grid" style="margin-top:18px;">
           <div class="bucket" id="bucket-obalka"></div>
-          <div></div>
+          <div class="bucket" id="bucket-nerozdelene" style="display:none;"></div>
         </div>
         <div class="dysko-wrap">
           <h3 style="font-family:'Fraunces',serif;font-size:15.5px;margin:0 0 8px;color:var(--forest-dark);">Dýška podle hodin</h3>
           <table class="dysko" id="dysko-table"></table>
         </div>
+        <div id="zbytek-summary" class="grid cols-3" style="margin-top:22px;"></div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-head"><span class="section-num">06</span><h2>Kontrola součtu podle kasy</h2></div>
+      <div class="section-head"><span class="section-num">06</span><h2>Kontrola součtu podle kase</h2></div>
       <div class="section-body" id="recon-body"></div>
     </div>
 
     <div class="section">
-      <div class="section-head"><span class="section-num">07</span><h2>Poznámka ke směně</h2></div>
+      <div class="section-head"><span class="section-num">07</span><h2>Poznámka a hodnocení směny</h2></div>
       <div class="section-body">
         <textarea id="f-comment" placeholder="Jak se vedlo na směně, případně problémy při počítání kasy…"></textarea>
+
+        <div style="margin-top:20px;">
+          <p id="weather-status" class="hint" style="margin-top:-8px;"></p>
+          <div class="rating-row">
+            <label>Jaké bylo počasí?</label>
+            <div class="toggle-row rating-icons" id="rate-pocasi">
+              <button type="button" class="toggle-btn" data-val="1" title="Bouřka"><i class="fa-solid fa-cloud-bolt"></i></button>
+              <button type="button" class="toggle-btn" data-val="2" title="Déšť"><i class="fa-solid fa-cloud-rain"></i></button>
+              <button type="button" class="toggle-btn" data-val="3" title="Zataženo"><i class="fa-solid fa-cloud"></i></button>
+              <button type="button" class="toggle-btn" data-val="4" title="Polojasno"><i class="fa-solid fa-cloud-sun"></i></button>
+              <button type="button" class="toggle-btn" data-val="5" title="Slunečno"><i class="fa-solid fa-sun"></i></button>
+            </div>
+          </div>
+          <div class="rating-row">
+            <label>Jak teplo dnes je?</label>
+            <div class="toggle-row rating-icons" id="rate-teplota">
+              <button type="button" class="toggle-btn" data-val="1" title="Zima"><i class="fa-solid fa-temperature-empty"></i></button>
+              <button type="button" class="toggle-btn" data-val="2" title="Chladno"><i class="fa-solid fa-temperature-quarter"></i></button>
+              <button type="button" class="toggle-btn" data-val="3" title="Tak akorát"><i class="fa-solid fa-temperature-half"></i></button>
+              <button type="button" class="toggle-btn" data-val="4" title="Teplo"><i class="fa-solid fa-temperature-three-quarters"></i></button>
+              <button type="button" class="toggle-btn" data-val="5" title="Horko"><i class="fa-solid fa-temperature-full"></i></button>
+            </div>
+          </div>
+          <div class="rating-row">
+            <label>Jaká byla nálada za barem?</label>
+            <div class="toggle-row rating-icons" id="rate-nalada">
+              <button type="button" class="toggle-btn" data-val="1" title="Mizerná"><i class="fa-solid fa-face-frown"></i></button>
+              <button type="button" class="toggle-btn" data-val="2" title="Spíš horší"><i class="fa-solid fa-face-frown-open"></i></button>
+              <button type="button" class="toggle-btn" data-val="3" title="Normální"><i class="fa-solid fa-face-meh"></i></button>
+              <button type="button" class="toggle-btn" data-val="4" title="Dobrá"><i class="fa-solid fa-face-smile"></i></button>
+              <button type="button" class="toggle-btn" data-val="5" title="Skvělá"><i class="fa-solid fa-face-smile-beam"></i></button>
+            </div>
+          </div>
+          <div class="rating-row">
+            <label>Jak nám to šlo?</label>
+            <div class="toggle-row rating-icons" id="rate-vykon">
+              <button type="button" class="toggle-btn" data-val="1" title="1 z 5"><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="toggle-btn" data-val="2" title="2 z 5"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="toggle-btn" data-val="3" title="3 z 5"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="toggle-btn" data-val="4" title="4 z 5"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></button>
+              <button type="button" class="toggle-btn" data-val="5" title="5 z 5"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></button>
+            </div>
+          </div>
+          <div class="rating-row">
+            <label>Jak moc bylo narváno?</label>
+            <div class="toggle-row rating-icons" id="rate-vytizenost">
+              <button type="button" class="toggle-btn" data-val="1" title="Skoro nikdo"><i class="fa-solid fa-user"></i></button>
+              <button type="button" class="toggle-btn" data-val="2" title="Klidno"><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i></button>
+              <button type="button" class="toggle-btn" data-val="3" title="Normální provoz"><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i></button>
+              <button type="button" class="toggle-btn" data-val="4" title="Rušno"><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i></button>
+              <button type="button" class="toggle-btn" data-val="5" title="Nabito"><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i><i class="fa-solid fa-user"></i></button>
+            </div>
+          </div>
+          <div class="rating-row">
+            <label>Jak se k nám chovali zákazníci?</label>
+            <div class="toggle-row rating-icons" id="rate-chovani">
+              <button type="button" class="toggle-btn" data-val="1" title="Nepříjemně"><i class="fa-solid fa-face-angry"></i></button>
+              <button type="button" class="toggle-btn" data-val="2" title="Spíš hůř"><i class="fa-solid fa-face-frown"></i></button>
+              <button type="button" class="toggle-btn" data-val="3" title="Normálně"><i class="fa-solid fa-face-meh"></i></button>
+              <button type="button" class="toggle-btn" data-val="4" title="Mile"><i class="fa-solid fa-face-smile"></i></button>
+              <button type="button" class="toggle-btn" data-val="5" title="Moc mile"><i class="fa-solid fa-face-grin-beam"></i></button>
+            </div>
+          </div>
+          <div>
+            <label for="f-hodnoceni-note">Něco výjimečného na směně? (akce v okolí, svátek, výpadek atp.)</label>
+            <input type="text" id="f-hodnoceni-note" placeholder="volitelné">
+          </div>
+        </div>
       </div>
     </div>
 
+    <div class="save-reminder">
+      <i class="fa-regular fa-bell"></i> Než odejdeš ze směny — nezapomeň uložit do Google Tabulky! Bez toho směna nikde nezůstane zaznamenaná.
+    </div>
     <div class="actions-bar">
       <button class="btn-secondary" onclick="runCalculation()">Přepočítat</button>
       <button class="btn-primary" onclick="exportPDF()">Stáhnout výčetku (PDF)</button>
+      <button class="btn-primary" onclick="saveToSheet()" id="sheet-save-btn">Uložit do Google Tabulky</button>
     </div>
+    <div id="sheet-status" class="hint" style="margin-top:10px;"></div>
   </div>
 
-  <footer class="credit">Skautský institut v Rybárně — interní nástroj pro počítání kasy. Data se nikam neukládají.</footer>
+  <footer class="credit">Skautský institut v Rybárně — interní nástroj pro počítání kasy. Vibecoded by Uzlík ♡ 2026</footer>
 </div>
+
+<div id="encourage-toast" class="encourage-toast"></div>
 
 <div style="height:0;overflow:hidden;">
   <div id="pdf-root" style="width:780px;"></div>
@@ -312,23 +501,26 @@ footer.credit{text-align:center;color:var(--ink-soft);font-size:12px;margin-top:
 const BANKNOTES = [5000,2000,1000,500,200,100];
 const COINS = [50,20,10,5,2,1];
 const ALL_DENOMS = [...BANKNOTES, ...COINS];
-const ZAKLAD_TARGET = {500:6,200:5,100:5,50:20,20:20,10:20,5:20,2:20,1:20};
+const ZAKLAD_TARGET = {500:6,200:5,100:5,50:40,20:40,10:40,5:40,2:40,1:40};
 const UNCERTAIN_NOTES = new Set([1000,2000,5000]);
 // Note-to-note resize patterns (flexible, no x10 rule — banknotes only, value-preserving)
 const NOTE_BREAKS = {
-  5000:[{1000:5},{500:10},{2000:2,1000:1}],
-  2000:[{1000:2},{500:4}],
-  1000:[{500:2},{200:5},{100:10}],
-  500: [{200:2,100:1},{100:5}],
-  200: [{100:2}],
+  5000:[{1000:5},{2000:2,1000:1},{2000:1,1000:3},{2000:1,1000:2,500:2},{1000:4,500:2},{1000:3,500:4},{1000:2,500:6},{2000:1,500:6}],
+  2000:[{1000:2},{500:4},{1000:1,500:2},{1000:1,500:1,200:2,100:1},{1000:1,500:1,200:1,100:3},{1000:1,500:1,100:5},{1000:1,200:4,100:2},{1000:1,200:3,100:4}],
+  1000:[{500:2},{200:5},{200:2,100:6},{200:3,100:4},{200:4,100:2},{500:1,200:2,100:1},{500:1,200:1,100:3},{500:1,100:5},{200:2,100:1,50:10},{200:1,100:3,50:10},{100:5,50:10}],
+  500: [{200:2,100:1},{200:1,100:3},{100:5},{50:10},{100:3,20:10},{200:1,100:1,20:10},{200:2,10:10},{20:20,10:10}],
+  200: [{100:2},{10:20},{20:10},{100:1,10:10}],
+  100: [{10:10},{5:10,2:20,1:10},{5:20}]
 };
 
 let bartenders = [];
+let counterBartenderId = null;
 let btSeq = 0;
 let typSmeny = 'denní';
 let kasaCislo = '1';
-let roundGranularity = 5;
-let zakladAlreadySeparated = true;
+let roundMode = 'usporne'; // 'presne' | 'usporne'
+let inventoryMode = 'separated'; // 'needs' | 'separated' | 'both'let zakladTolerance = false;
+let rating = { pocasi:0, teplota:0, nalada:0, vytizenost:0, vykon:0, chovani:0 };
 let lastCalc = null;
 
 /* ===================== FORMATTING HELPERS ===================== */
@@ -392,29 +584,61 @@ function* moves(pool){
   }
   for(const d of COINS){
     const needVal = 10*d;
-    const give = minPieceComposeReal(needVal, pool);
-    if(!give) continue;
-    const np = sub(pool, give.pieces);
-    np[d] = (np[d]||0) + 10;
-    yield {pool:np, step:{give:give.pieces, take:{[d]:10}, kind:'coin', uncertain:false}};
+    const seenGives = new Set();
+    // 1) výchozí: nejméně kusů celkem (jak appka dělala dosud)
+    const defaultGive = minPieceComposeReal(needVal, pool);
+    if(defaultGive){
+      const key = JSON.stringify(defaultGive.pieces);
+      seenGives.add(key);
+      const np = sub(pool, defaultGive.pieces);
+      np[d] = (np[d]||0) + 10;
+      yield {pool:np, step:{give:defaultGive.pieces, take:{[d]:10}, kind:'coin', uncertain:false}};
+    }
+    // 2) alternativy: dát čistě z JEDNÉ JINÉ hodnoty (bankovka i mince), pokud to
+    // v kase přesně sedí — appka díky tomu může "dát" i dražší kombinaci kusů, kdyby
+    // to jinde pomohlo (brát se pořád smí jen po deseti stejných mincích).
+    for(const altD of ALL_DENOMS){
+      if(altD === d) continue;
+      if(needVal % altD !== 0) continue;
+      const count = needVal / altD;
+      if((pool[altD]||0) < count) continue;
+      const give = {[altD]: count};
+      const key = JSON.stringify(give);
+      if(seenGives.has(key)) continue;
+      seenGives.add(key);
+      const np = sub(pool, give);
+      np[d] = (np[d]||0) + 10;
+      yield {pool:np, step:{give, take:{[d]:10}, kind:'coin', uncertain:false}};
+    }
   }
 }
-
-function reshapeBFS(startPool, isDone, maxDepth=3){
+function reshapeBFS(startPool, isDone, maxDepth=3, scoreFn=null){
   if(isDone(startPool)) return {pool:startPool, breaks:[]};
   const seen = new Set([poolKey(startPool)]);
   let queue = [{pool:startPool, breaks:[]}];
   for(let depth=0; depth<maxDepth; depth++){
     const next = [];
+    const solutions = [];
     for(const node of queue){
       for(const mv of moves(node.pool)){
         const key = poolKey(mv.pool);
         if(seen.has(key)) continue;
         seen.add(key);
         const breaks = [...node.breaks, mv.step];
-        if(isDone(mv.pool)) return {pool:mv.pool, breaks};
-        next.push({pool:mv.pool, breaks});
+        if(isDone(mv.pool)) solutions.push({pool:mv.pool, breaks});
+        else next.push({pool:mv.pool, breaks});
       }
+    }
+    if(solutions.length){
+      // Víc řešení stejně "krátkých" (stejný počet rozměn) může dát velmi různý počet
+      // kusů — appka mezi nimi vybere to nejúspornější, ne jen první nalezené.
+      if(!scoreFn || solutions.length===1) return solutions[0];
+      let best = solutions[0], bestScore = scoreFn(solutions[0].pool);
+      for(let i=1; i<solutions.length; i++){
+        const s = scoreFn(solutions[i].pool);
+        if(s < bestScore){ bestScore = s; best = solutions[i]; }
+      }
+      return best;
     }
     queue = next;
     if(!queue.length) break;
@@ -428,32 +652,61 @@ function composeAmount(amount, poolIn, maxDepth=3){
   if(amount<=0) return {ok:true, pieces:{}, breaks:[], leftoverPool:pool};
   if(valueOf(pool) < amount) return {ok:false, reason:'shortage', missing: amount-valueOf(pool)};
   const isDone = p => !!minPieceComposeReal(amount, p);
-  const res = reshapeBFS(pool, isDone, maxDepth);
+  const scoreFn = p => { const r = minPieceComposeReal(amount, p); return r ? r.total : Infinity; };
+  const res = reshapeBFS(pool, isDone, maxDepth, scoreFn);
   if(!res) return {ok:false, reason:'cannot_reshape'};
   const finalPieces = minPieceComposeReal(amount, res.pool);
   return {ok:true, pieces:finalPieces.pieces, breaks:res.breaks, leftoverPool: sub(res.pool, finalPieces.pieces)};
 }
 
-function composeZaklad(poolIn, maxDepth=3){
+function composeZaklad(poolIn, maxDepth=3, allowTolerance=false){
   let pool = cloneCounts(poolIn);
   const zaklad = {};
   const shortages = [];
   const subLog = [];
+  const deviationLog = [];
+  let toleranceTotal = 0;
+
   for(const d of [500,200,100,50,20,10,5,2,1]){
     const target = ZAKLAD_TARGET[d];
-    if((pool[d]||0) < target){
-      const isDone = p => (p[d]||0) >= target;
-      const res = reshapeBFS(pool, isDone, maxDepth);
-      if(res){
-        pool = res.pool;
-        if(res.breaks.length) subLog.push({forDenom:d, breaks:res.breaks});
+    const have = pool[d]||0;
+
+    if(have >= target){
+      zaklad[d] = target; pool[d] -= target;
+      continue;
+    }
+
+    const deficitCount = target - have;
+    const deficitValue = deficitCount * d;
+
+    // volitelná tolerance: menší odchylku od ideálního základu (max 2 ks u jedné hodnoty,
+    // max 5 ks celkem) appka vyřeší tiše z toho, co v kase je, místo aby rozměňovala
+    if(allowTolerance && toleranceTotal < 5){
+      const budget = Math.min(2, 5-toleranceTotal);
+      const quiet = minPieceComposeReal(deficitValue, pool);
+      if(quiet && quiet.total<=budget){
+        zaklad[d] = have; pool[d] = 0;
+        for(const [dd,cc] of Object.entries(quiet.pieces)){
+          zaklad[dd]=(zaklad[dd]||0)+cc; pool[dd]-=cc;
+        }
+        toleranceTotal += quiet.total;
+        deviationLog.push({denom:d, missing:deficitCount, substitutedWith:quiet.pieces});
+        continue;
       }
+    }
+
+    const isDone = p => (p[d]||0) >= target;
+    const res = reshapeBFS(pool, isDone, maxDepth);
+    if(res){
+      pool = res.pool;
+      if(res.breaks.length) subLog.push({forDenom:d, missingCount:deficitCount, breaks:res.breaks});
     }
     const take = Math.min(target, pool[d]||0);
     zaklad[d]=take; pool[d]-=take;
     if(take<target) shortages.push({denom:d, missing:target-take});
   }
-  return {zaklad, poolAfter:pool, shortages, subLog};
+
+  return {zaklad, poolAfter:pool, shortages, subLog, deviationLog};
 }
 
 function describePieces(p){
@@ -472,6 +725,73 @@ function idealPieceCount(amount){
   let n=0, rem=Math.round(amount);
   for(const d of ALL_DENOMS){ const c=Math.floor(rem/d); n+=c; rem-=c*d; }
   return n;
+}
+// "Úsporně": mezi částkami blízkými raw najde tu s nejméně kusy v ideálním (neomezeném) složení.
+// Okno se škáluje na 12 % z částky (strop ±25 Kč, minimum ±2 Kč), ať malé podíly nekolísají
+// o desítky procent kvůli úspoře jednoho kusu. Nikdy nevrátí 0 Kč, pokud má člověk reálný nárok.
+function chooseUsporneAmount(raw, windowPct=0.12, maxWindow=25, minWindow=2){
+  const center = Math.round(raw);
+  const window = Math.min(maxWindow, Math.max(minWindow, Math.round(Math.abs(raw)*windowPct)));
+  const lowerBound = raw > 0.5 ? Math.max(1, center-window) : 0;
+  let best = Math.max(lowerBound, center), bestCount = idealPieceCount(best);
+  for(let cand = lowerBound; cand <= center+window; cand++){
+    const c = idealPieceCount(cand);
+    if(c < bestCount || (c===bestCount && Math.abs(cand-raw) < Math.abs(best-raw))){
+      bestCount = c; best = cand;
+    }
+  }
+  return best;
+}
+// Jako chooseUsporneAmount, ale přednostně vybere částku, kterou lze rovnou poskládat
+// z toho, co AKTUÁLNĚ v kase je — i kdyby teoreticky "ideální" varianta měla o kousek
+// méně kusů, ale vyžadovala by rozměnu. Používá se sekvenčně, jak appka postupně
+// skládá jednotlivé hromádky (viz runCalculation).
+//
+// Důležité: appka porovnává kandidáty NE proti teoretickému (neomezenému) ideálu, ale
+// proti tomu, co sama dokáže z téhle kasy vyskládat i s rozměnou u PŮVODNÍ částky —
+// jinak by se zbytečně uchylovala k vzdáleným hodnotám (a tím komplikovala dorovnávání
+// součtu mezi lidmi), i když by původní částka s troškou rozměny byla stejně dobrá.
+function choosePoolAware(raw, pool, windowPct=0.12, maxWindow=25, minWindow=2){
+  const center = Math.round(raw);
+  const baseline = composeAmount(center, pool); // appka smí použít i rozměnu
+  let bestVal = center;
+  let bestCount = baseline.ok ? Object.values(baseline.pieces).reduce((a,c)=>a+c,0) : Infinity;
+  const window = Math.min(maxWindow, Math.max(minWindow, Math.round(Math.abs(raw)*windowPct)));
+  const lowerBound = raw > 0.5 ? Math.max(1, center-window) : 0;
+  for(let cand=lowerBound; cand<=center+window; cand++){
+    const direct = minPieceComposeReal(cand, pool); // bez rozměny — musí být přímo v kase
+    if(!direct) continue;
+    if(direct.total < bestCount || (direct.total === bestCount && Math.abs(cand-raw) < Math.abs(bestVal-raw))){
+      bestCount = direct.total; bestVal = cand;
+    }
+  }
+  return bestVal;
+}
+// Než appka slepě přijme, že částka potřebuje rozměnu, porovná to s tím, kolik kusů by
+// stejně vyžadovala rozměna vs. nejbližší jinou částku, kterou lze poskládat přímo —
+// a posune se, jen když je ta jiná částka PROKAZATELNĚ úspornější (méně kusů), ne jen
+// proto, že "jde napřímo". Nikdy nenabídne 0 Kč (ani zápor).
+function repairIfNeeded(amount, pool, maxDev=5){
+  const baseline = composeAmount(amount, pool); // appka smí použít i rozměnu
+  let best = amount;
+  let bestCount = baseline.ok ? Object.values(baseline.pieces).reduce((a,c)=>a+c,0) : Infinity;
+  for(let d = 1; d <= maxDev; d++){
+    for(const cand of [amount-d, amount+d]){
+      if(cand <= 0) continue;
+      const direct = minPieceComposeReal(cand, pool); // bez rozměny
+      if(direct && direct.total < bestCount){ best = cand; bestCount = direct.total; }
+    }
+  }
+  return best;
+}
+// Hledá nejbližší částku ≤ rawObalka, kterou lze poskládat bez rozměny — nikdy nejde nahoru
+// (obálka se nesmí zvětšit, tržba nikdy neklesne pod zadanou uzávěrku). Najde nejmenší
+// možnou odchylku, ne mechanické zaokrouhlení na desítky.
+function chooseObalkaDownward(rawObalka, pool, maxWindow=25){
+  for(let cand = rawObalka; cand >= Math.max(0, rawObalka-maxWindow); cand--){
+    if(minPieceComposeReal(cand, pool)) return cand;
+  }
+  return rawObalka;
 }
 function bucketPenalty(key, pieces, target){
   if(key==='zaklad'){
@@ -567,17 +887,112 @@ function addBartender(name='', hours=''){
   bartenders.push({id, name, hours});
   renderBartenders();
 }
-function removeBartender(id){ bartenders = bartenders.filter(b=>b.id!==id); renderBartenders(); }
+function removeBartender(id){
+  bartenders = bartenders.filter(b=>b.id!==id);
+  if(counterBartenderId===id){ counterBartenderId=null; document.getElementById('f-counter').value=''; }
+  renderBartenders();
+}
 function renderBartenders(){
   const el = document.getElementById('bt-list');
   el.innerHTML = bartenders.map(b=>`
     <div class="bt-row">
+      <button type="button" class="counter-icon ${b.id===counterBartenderId?'active':''}" title="Tenhle/tahle počítá kasu" onclick="setCounter('${b.id}')">${counterIconSvg()}</button>
       <div><label>Jméno</label><input type="text" value="${escapeHtml(b.name)}" oninput="updateBartender('${b.id}','name',this.value)"></div>
       <div><label>Hodiny</label><input type="text" inputmode="decimal" value="${b.hours}" placeholder="4,5" oninput="updateBartender('${b.id}','hours',this.value)"></div>
       <button type="button" class="icon-btn" title="Odebrat" onclick="removeBartender('${b.id}')">×</button>
     </div>`).join('');
 }
-function updateBartender(id,field,val){ const b = bartenders.find(x=>x.id===id); if(b) b[field]=val; }
+function updateBartender(id,field,val){
+  const b = bartenders.find(x=>x.id===id);
+  if(b) b[field]=val;
+  if(field==='name' && id===counterBartenderId) document.getElementById('f-counter').value = val;
+}
+function setCounter(id){
+  counterBartenderId = id;
+  const b = bartenders.find(x=>x.id===id);
+  document.getElementById('f-counter').value = b ? b.name : '';
+  renderBartenders();
+}
+/* ===================== POČASÍ (automatické, Praha centrum) ===================== */
+// Praha, Staroměstské náměstí — souřadnice centra.
+const PRAHA_LAT = 50.0870, PRAHA_LON = 14.4208;
+let weatherCache = null; // {date, hourly:{time:[...], weather_code:[...], temperature_2m:[...]}, dailyMax}
+
+function wmoToPocasi(code){
+  if(code===0) return 5; // slunečno
+  if(code===1 || code===2) return 4; // polojasno
+  if(code===3 || code===45 || code===48) return 3; // zataženo
+  if([95,96,99].includes(code)) return 1; // bouřka
+  // déšť/přeháňky/sníh — appka pro sníh nemá vlastní ikonu, bereme jako nejbližší přiblížení
+  return 2;
+}
+function tempToRating(maxC){
+  if(maxC < 5) return 1;
+  if(maxC < 12) return 2;
+  if(maxC < 20) return 3;
+  if(maxC < 27) return 4;
+  return 5;
+}
+
+async function fetchWeatherForDate(dateStr){
+  const statusEl = document.getElementById('weather-status');
+  if(statusEl) statusEl.textContent = 'Načítám počasí…';
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${PRAHA_LAT}&longitude=${PRAHA_LON}`
+      + `&hourly=weather_code,temperature_2m&daily=temperature_2m_max`
+      + `&timezone=Europe%2FPrague&start_date=${dateStr}&end_date=${dateStr}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    weatherCache = { date: dateStr, hourly: data.hourly, dailyMax: data.daily?.temperature_2m_max?.[0] };
+    applyWeatherToRatings();
+    if(statusEl) statusEl.textContent = `✓ Počasí načteno (Praha, ${dateStr}).`;
+  } catch(err){
+    weatherCache = null;
+    if(statusEl) statusEl.textContent = 'Počasí se nepodařilo načíst automaticky — vyber prosím ručně.';
+  }
+}
+
+// Z hodinových dat vybere okno dne/večera podle aktuálně zvoleného typu směny
+// a nastaví "nejhorší" (nejzávažnější) počasí v tom okně + denní teplotní maximum.
+function applyWeatherToRatings(){
+  if(!weatherCache || !weatherCache.hourly) return;
+  const { time, weather_code } = weatherCache.hourly;
+  if(!time || !weather_code) return;
+  const isEvening = typSmeny === 'večerní';
+  const hours = isEvening ? [19,20,21,22,23] : [7,8,9,10,11,12,13,14,15,16,17,18];
+  let worst = 5; // 5=nejlepší, hledáme minimum (nejzávažnější)
+  time.forEach((t,i)=>{
+    const h = Number(t.slice(11,13));
+    if(hours.includes(h)){
+      const r = wmoToPocasi(weather_code[i]);
+      if(r < worst) worst = r;
+    }
+  });
+  setToggleValue('rate-pocasi', String(worst));
+  if(weatherCache.dailyMax !== undefined && weatherCache.dailyMax !== null){
+    setToggleValue('rate-teplota', String(tempToRating(weatherCache.dailyMax)));
+  }
+}
+
+function counterIconSvg(){
+  return `<i class="fa-regular fa-hand"></i>`;
+}
+
+const ENCOURAGEMENTS = [
+  'Jsi frajer!', 'Tak a máš spočítáno!', 'Takhle dobře by to jen tak někdo neudělal!',
+  'Paráda, hotovo!', 'A je to v suchu!', 'Skvělá práce!', 'Ať žije pořádek v kase!',
+  'Za tohle zasloužíš pochvalu!', 'Kasa spočítaná, svět v pořádku!', 'Šikovná ruka na kasu!'
+];
+let encourageTimer = null;
+function showEncouragement(){
+  const el = document.getElementById('encourage-toast');
+  const msg = ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)];
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(encourageTimer);
+  encourageTimer = setTimeout(()=> el.classList.remove('show'), 2600);
+}
 
 function setupToggle(containerId, onChange){
   const cont = document.getElementById(containerId);
@@ -588,6 +1003,11 @@ function setupToggle(containerId, onChange){
       onChange(btn.dataset.val);
     });
   });
+}
+// Programově "klikne" na tlačítko dané hodnoty v přepínači — spustí i jeho onChange handler.
+function setToggleValue(containerId, val){
+  const btn = document.querySelector(`#${containerId} button[data-val="${val}"]`);
+  if(btn) btn.click();
 }
 
 function updateDateDisplay(){
@@ -620,92 +1040,195 @@ function runCalculation(){
   const errors = [];
   if(validBartenders.length === 0) errors.push('Zadej alespoň jednoho barmana se jménem a odpracovanými hodinami.');
 
-  const needsZaklad = !zakladAlreadySeparated;
+  const needsZaklad = (inventoryMode === 'needs');
+  const needsTrzbaSeparation = (inventoryMode !== 'both');
   const zakladTargetVal = needsZaklad ? Object.entries(ZAKLAD_TARGET).reduce((s,[d,c])=>s+Number(d)*c,0) : 0;
-  const zbytekValue = inventoryValue - zakladTargetVal - cash;
+  const zbytekValue = needsTrzbaSeparation ? (inventoryValue - zakladTargetVal - cash) : (inventoryValue - zakladTargetVal);
 
   let stopHere = false;
   if(zbytekValue < 0){
-    errors.push(`Nelze poskládat tržbu ${kc(cash)}${needsZaklad ? ' a základ' : ''} — v kase chybí ${kc(-zbytekValue)} (možné manko).`);
+    const co = [];
+    if(needsTrzbaSeparation) co.push(`tržbu ${kc(cash)}`);
+    if(needsZaklad) co.push('základ');
+    errors.push(`Nelze poskládat ${co.join(' a ') || 'zadané rozdělení'} — v kase chybí ${kc(-zbytekValue)} (možné manko).`);
     stopHere = true;
   }
 
-  let obalkaAmount = 0, dyskySplit = [];
-  if(!stopHere){
-    obalkaAmount = Math.round(zbytekValue*0.10);
-    const dyskyTotal = zbytekValue - obalkaAmount;
-    if(validBartenders.length > 0){
-      const totalHours = validBartenders.reduce((s,b)=>s+b.hours,0);
-      const raw = validBartenders.map(b => dyskyTotal * b.hours / totalHours);
-      const rounded = raw.map(v => Math.round(v/roundGranularity)*roundGranularity);
-      const diff = Math.round(dyskyTotal - rounded.reduce((a,b)=>a+b,0));
-      if(diff !== 0){
-        const order = raw.map((v,i)=>({i, delta:Math.abs(v-rounded[i])})).sort((a,b)=>a.delta-b.delta);
-        rounded[order[0].i] += diff;
-      }
-      dyskySplit = validBartenders.map((b,i)=>({...b, amount: rounded[i]}));
-    }
-  }
+  // ---- 1) cíl pro dýška (obálka = 10 % ze zbytku, zaokrouhleno na celé Kč) ----
+  const rawObalka = stopHere ? 0 : Math.round(zbytekValue*0.10);
+  const dyskaTotal = stopHere ? 0 : zbytekValue - rawObalka;
+  let obalkaAmount = rawObalka, trzbaFinal = cash, obalkaRemainder = 0, dyskoRepairDriftTotal = 0;
 
-  // ---- 1) počáteční skládání v pořadí podle priority (nejchráněnější první): dýška -> základ -> obálka -> tržba (doplněk) ----
+  // ---- 2) skládání v pořadí podle priority (nejchráněnější první): dýška -> základ -> obálka -> tržba (doplněk) ----
   let pool = cloneCounts(inventory);
   const allocation = {};
   const targets = {};
   const rozmenaLog = [];
   let zakladShortages = [];
+  let zakladDeviationLog = [];
+  let dyskaSplit = [];
+
+  if(!stopHere && validBartenders.length > 0){
+    const totalHours = validBartenders.reduce((s,b)=>s+b.hours,0);
+    const raw = validBartenders.map(b => dyskaTotal * b.hours / totalHours);
+
+    if(roundMode === 'presne'){
+      // spočítat všechny částky napřed (přesné zaokrouhlení), fér doplnit zbytek, pak skládat odshora
+      let amounts = raw.map(v => Math.round(v));
+      const diff = Math.round(dyskaTotal - amounts.reduce((a,b)=>a+b,0));
+      if(diff !== 0){
+        const costs = raw.map((v,i)=>Math.abs(v-amounts[i]));
+        const minCost = Math.min(...costs);
+        const tiedIdx = costs.map((c,i)=>({c,i})).filter(x=>Math.abs(x.c-minCost)<1e-9).map(x=>x.i);
+        let remaining = diff, oi = 0, guard = 0;
+        while(remaining !== 0 && guard < 100000){
+          const idx = tiedIdx[oi % tiedIdx.length];
+          const step = remaining>0 ? 1 : -1;
+          amounts[idx] = Math.max(0, amounts[idx]+step);
+          remaining -= step; oi++; guard++;
+        }
+      }
+      dyskaSplit = validBartenders.map((b,i)=>({...b, amount: amounts[i]}));
+      const dyskoSorted = [...dyskaSplit].sort((a,b)=>b.amount-a.amount);
+      for(const b of dyskoSorted){
+        const key = 'dysko_'+b.id;
+        if(b.amount > 0){
+          const r = composeAmount(b.amount, pool);
+          if(r.ok){
+            allocation[key]=r.pieces; targets[key]=b.amount; pool=r.leftoverPool;
+            rozmenaLog.push(...r.breaks.map(x=>({...x, context:`dýško — ${b.name}, cíl ${kc(b.amount)}`})));
+          } else {
+            allocation[key]={}; targets[key]=b.amount;
+            errors.push(`Nelze vyskládat dýško pro ${b.name} (${kc(b.amount)}) — doplň ručně.`);
+          }
+        } else {
+          allocation[key]={}; targets[key]=0;
+        }
+      }
+    } else {
+      // "úsporně": každý dostane pool-aware "hezkou" částku NEZÁVISLE, vůči aktuálnímu
+      // stavu kasy (ne postupně se tenčícímu) — díky tomu mají lidé se stejnými hodinami
+      // vždy stejnou částku (spravedlnost), a přitom appka bere ohled na to, co v kase je.
+      let amounts = raw.map(v => choosePoolAware(v, pool));
+      const diff = Math.round(dyskaTotal - amounts.reduce((a,b)=>a+b,0));
+      if(diff !== 0){
+        const step = diff>0?1:-1;
+        const costs = validBartenders.map((b,i)=>idealPieceCount(Math.max(0,amounts[i]+step))-idealPieceCount(amounts[i]));
+        const minCost = Math.min(...costs);
+        const tiedIdx = costs.map((c,i)=>({c,i})).filter(x=>Math.abs(x.c-minCost)<1e-9).map(x=>x.i);
+        let remaining = diff, oi = 0, guard = 0;
+        while(remaining !== 0 && guard < 100000){
+          const idx = tiedIdx[oi % tiedIdx.length];
+          const step2 = remaining>0 ? 1 : -1;
+          amounts[idx] = Math.max(0, amounts[idx]+step2);
+          remaining -= step2; oi++; guard++;
+        }
+      }
+      dyskaSplit = validBartenders.map((b,i)=>({...b, amount: amounts[i]}));
+      // fyzické skládání kusů: odshora (větší částky nejdřív), aby se "nedrobily" zbytečně.
+      // Pokud by fér částka vyžadovala rozměnu, appka nejdřív zkusí drobnou opravu (±5 Kč) —
+      // pokud tím jde rozměně předejít, použije ji a jasně to napíše do poznámek.
+      const dyskoSorted = [...dyskaSplit].sort((a,b)=>b.amount-a.amount);
+      let dyskoRepairDrift = 0;
+      for(const b of dyskoSorted){
+        const key = 'dysko_'+b.id;
+        if(b.amount > 0){
+          const repaired = repairIfNeeded(b.amount, pool, 5);
+          if(repaired !== b.amount){
+            dyskoRepairDrift += (b.amount - repaired);
+            rozmenaLog.push({give:{}, take:{}, isRepair:true, context:`dýško — ${b.name}: místo ${kc(b.amount)} dostane ${kc(repaired)} (o ${kc(Math.abs(repaired-b.amount))} ${repaired>b.amount?'víc':'míň'}), aby se předešlo rozměně`});
+          }
+          const r = composeAmount(repaired, pool);
+          if(r.ok){
+            allocation[key]=r.pieces; targets[key]=repaired; pool=r.leftoverPool;
+            rozmenaLog.push(...r.breaks.map(x=>({...x, context:`dýško — ${b.name}, cíl ${kc(repaired)}`})));
+          } else {
+            allocation[key]={}; targets[key]=repaired;
+            errors.push(`Nelze vyskládat dýško pro ${b.name} (${kc(repaired)}) — doplň ručně.`);
+          }
+        } else {
+          allocation[key]={}; targets[key]=0;
+        }
+      }
+      if(dyskoRepairDrift !== 0){
+        dyskoRepairDriftTotal = dyskoRepairDrift;
+        if(needsTrzbaSeparation) trzbaFinal += dyskoRepairDrift;
+        else obalkaAmount += dyskoRepairDrift;
+      }
+    }
+  }
 
   if(!stopHere){
-    const dyskoSorted = [...dyskySplit].sort((a,b)=>b.amount-a.amount);
-    for(const b of dyskoSorted){
-      const key = 'dysko_'+b.id;
-      if(b.amount > 0){
-        const r = composeAmount(b.amount, pool);
-        if(r.ok){
-          allocation[key]=r.pieces; targets[key]=b.amount; pool=r.leftoverPool;
-          rozmenaLog.push(...r.breaks.map(x=>({...x, context:`dýško — ${b.name}`})));
-        } else {
-          allocation[key]={}; targets[key]=b.amount;
-          errors.push(`Nelze vyskládat dýško pro ${b.name} (${kc(b.amount)}) — doplň ručně.`);
-        }
-      } else {
-        allocation[key]={}; targets[key]=0;
+    if(needsZaklad){
+      const z = composeZaklad(pool, 3, zakladTolerance);
+      allocation['zaklad']=z.zaklad; targets['zaklad']=zakladTargetVal; pool=z.poolAfter;
+      z.subLog.forEach(s=> rozmenaLog.push(...s.breaks.map(b=>({...b, context:`základ, chybělo ${s.missingCount}× ${fmt(s.forDenom)} Kč`}))));
+      zakladShortages = z.shortages;
+      zakladDeviationLog = z.deviationLog;
+      if(zakladShortages.length){
+        errors.push('Nelze plně poskládat základ — chybí: '+zakladShortages.map(e=>`${e.missing}× ${fmt(e.denom)} Kč`).join(', ')+'. Doplň ručně (přebytek pak zůstal navíc v tržbě).');
       }
     }
 
-    if(needsZaklad){
-      const z = composeZaklad(pool);
-      allocation['zaklad']=z.zaklad; targets['zaklad']=zakladTargetVal; pool=z.poolAfter;
-      z.subLog.forEach(s=> rozmenaLog.push(...s.breaks.map(b=>({...b, context:'základ'}))));
-      zakladShortages = z.shortages;
-      if(zakladShortages.length){
-        errors.push('Nelze plně poskládat základ — chybí: '+zakladShortages.map(e=>`${e.missing}× ${fmt(e.denom)} Kč`).join(', ')+'. Doplň ručně (přebytek pak zůstal navíc v tržbě).');
+    // Appka zkusí najít nejmenší možnou odchylku od ideálních 10 % (nikdy směrem nahoru),
+    // kterou lze poskládat bez rozměny — a jen pokud to skutečně pomůže, přebytek automaticky
+    // přesune do tržby. Tržba tím může jedině dostat pár korun navíc, nikdy méně, než je zadáno.
+    if(needsTrzbaSeparation && rawObalka > 0){
+      const candidate = chooseObalkaDownward(rawObalka, pool);
+      if(candidate < rawObalka){
+        const noShift = composeAmount(rawObalka, pool);
+        const withShift = composeAmount(candidate, pool);
+        const noShiftBreaks = noShift.ok ? noShift.breaks.length : Infinity;
+        const withShiftBreaks = withShift.ok ? withShift.breaks.length : Infinity;
+        if(withShiftBreaks < noShiftBreaks){
+          obalkaRemainder = rawObalka - candidate;
+          obalkaAmount = candidate;
+          trzbaFinal += obalkaRemainder;
+        }
       }
     }
 
     const oRes = composeAmount(obalkaAmount, pool);
     if(oRes.ok){
       allocation['obalka']=oRes.pieces; targets['obalka']=obalkaAmount; pool=oRes.leftoverPool;
-      rozmenaLog.push(...oRes.breaks.map(b=>({...b, context:'obálka'})));
+      rozmenaLog.push(...oRes.breaks.map(b=>({...b, context:`obálka, cíl ${kc(obalkaAmount)}`})));
     } else {
       allocation['obalka']={}; targets['obalka']=obalkaAmount;
-      errors.push(`Nelze poskládat obálku na manka (${kc(obalkaAmount)}) — doplň ručně.`);
+      errors.push(`Nelze poskládat obsah malé obálky (10 % dýšek) (${kc(obalkaAmount)}) — doplň ručně.`);
     }
 
-    // tržba = doplněk (co zbylo); její cíl pro penalizaci je její skutečná hodnota,
-    // aby drobný nesoulad ze základu (viz výše) nezkresloval optimalizaci
-    allocation['trzba'] = pool;
-    targets['trzba'] = valueOf(pool);
+    // Tržba cílí přesně na svou vlastní částku (ne "co zbyde") — pokud by kvůli chybě
+    // výše (nepovedené dýško/obálka) v poolu zůstalo navíc peněz, appka je NEschová
+    // potichu do tržby, ale ukáže je zvlášť jako "Nerozdělené" — ať je jasně vidět, že
+    // je potřeba je ručně přiřadit, ne že je tržba záhadně vyšší, než jsi zadal/a.
+    if(needsTrzbaSeparation){
+      const tRes = composeAmount(trzbaFinal, pool);
+      if(tRes.ok){
+        allocation['trzba'] = tRes.pieces; targets['trzba'] = trzbaFinal; pool = tRes.leftoverPool;
+        rozmenaLog.push(...tRes.breaks.map(b=>({...b, context:`tržba, cíl ${kc(trzbaFinal)}`})));
+        if(valueOf(pool) > 0){
+          allocation['nerozdelene'] = cloneCounts(pool); targets['nerozdelene'] = valueOf(pool);
+          errors.push(`V kase zůstalo nerozdělených ${kc(valueOf(pool))} (patrně kvůli chybě výše) — je to zvlášť v sekci 05 jako "Nerozdělené", ručně přiřaď správné hromádce.`);
+        }
+      } else {
+        allocation['trzba'] = pool; targets['trzba'] = valueOf(pool);
+        errors.push(`Ani přesnou tržbu (${kc(trzbaFinal)}) se nepodařilo poskládat z toho, co zbylo — zkontroluj prosím čísla výše, něco je vážně špatně. Tržba níže obsahuje vše, co v kase zbylo (${kc(valueOf(pool))}), ne přesně zadanou částku.`);
+      }
+    } else if(valueOf(pool) > 0){
+      allocation['nerozdelene'] = cloneCounts(pool); targets['nerozdelene'] = valueOf(pool);
+      errors.push(`V kase zůstalo nerozdělených ${kc(valueOf(pool))}, přestože tržba už podle zadání byla oddělená — zkontroluj rozdělení dýška/obálky nebo zadaná čísla.`);
+    }
   }
 
   // ---- 2) lokální prohledávání: zkusí tisíce drobných výměn kusů mezi hromádkami a sníží váženou penalizaci ----
   let penaltyScore = 0;
   if(!stopHere){
-    const refined = localSearchRefine(allocation, targets, rozmenaLog.length, 1200);
+    const refined = localSearchRefine(allocation, targets, rozmenaLog.filter(x=>!x.isRepair).length, 1200);
     Object.assign(allocation, refined.allocation);
     penaltyScore = refined.penalty;
   }
 
-  const dyskyAllocated = validBartenders.map(b => ({...b, pieces: allocation['dysko_'+b.id] || {}}));
+  const dyskaAllocated = validBartenders.map(b => ({...b, amount: targets['dysko_'+b.id] ?? 0, pieces: allocation['dysko_'+b.id] || {}}));
 
   let adjustedInventory = cloneCounts(inventory);
   rozmenaLog.forEach(brk=>{
@@ -714,11 +1237,12 @@ function runCalculation(){
   });
 
   lastCalc = {
-    inventory, adjustedInventory, inventoryValue, cash, card, needsZaklad, penaltyScore,
-    zaklad: allocation['zaklad'] || {}, zakladShortages,
-    trzba: allocation['trzba'] || {},
+    inventory, adjustedInventory, inventoryValue, cash, card, needsZaklad, needsTrzbaSeparation, penaltyScore,
+    zaklad: allocation['zaklad'] || {}, zakladShortages, zakladDeviationLog,
+    trzba: allocation['trzba'] || {}, trzbaFinal, obalkaRemainder,
     obalka: allocation['obalka'] || {}, obalkaAmount,
-    dysky: dyskyAllocated, dyskyPool: zbytekValue - obalkaAmount,
+    nerozdelene: allocation['nerozdelene'] || null, dyskoRepairDriftTotal,
+    dyska: dyskaAllocated, dyskaPool: dyskaTotal,
     rozmenaLog, errors, stopHere,
     meta: {
       date: document.getElementById('f-date-text').value,
@@ -761,7 +1285,7 @@ function sumPieces(pieces){ return Object.entries(pieces).reduce((s,[d,c])=>s+Nu
 
 function renderDyskoTable(){
   const table = document.getElementById('dysko-table');
-  const barmani = lastCalc.dysky;
+  const barmani = lastCalc.dyska;
   const keys = barmani.map(b=>'dysko_'+b.id);
   const rows = ALL_DENOMS.filter(d => keys.some(k=>(window.allocState[k][d]||0)>0));
   const thead = '<thead><tr><th>Hodnota</th>' + barmani.map(b=>`<th>${escapeHtml(b.name)}</th>`).join('') + '</tr></thead>';
@@ -783,24 +1307,153 @@ function renderDyskoTable(){
   });
 }
 
+const AUTO_NOTE_PREFIX = '⚙ Automaticky:';
+// Udržuje v poznámce (sekce 07) jeden řádek popisující přesun drobných z obálky do tržby —
+// při každém přepočtu ho smaže a znovu napíše (pokud je pořád potřeba), takže se nekumuluje
+// a vlastní text uživatele v poznámce zůstává nedotčený.
+function updateAutoNote(calc){
+  const textarea = document.getElementById('f-comment');
+  if(!textarea) return;
+  const existing = textarea.value;
+  const lines = existing.length ? existing.split('\n').filter(line => !line.trim().startsWith(AUTO_NOTE_PREFIX)) : [];
+  if(calc.obalkaRemainder > 0){
+    lines.push(`${AUTO_NOTE_PREFIX} ${kc(calc.obalkaRemainder)} z obálky (zaokrouhleno na ${kc(calc.obalkaAmount)}) přidáno do tržby — fyzická tržba je o ${kc(calc.obalkaRemainder)} vyšší než uzávěrka (cíl ${kc(calc.trzbaFinal)}).`);
+  }
+  if(calc.dyskoRepairDriftTotal){
+    const d = calc.dyskoRepairDriftTotal;
+    const kam = calc.needsTrzbaSeparation ? `do tržby (cíl ${kc(calc.trzbaFinal)})` : `do obálky (cíl ${kc(calc.obalkaAmount)})`;
+    lines.push(`${AUTO_NOTE_PREFIX} drobné úpravy dýška kvůli předejití rozměně ${d>0?'uvolnily':'stály'} ${kc(Math.abs(d))} navíc, přidáno ${kam}.`);
+  }
+  textarea.value = lines.join('\n');
+}
+
 function renderResults(calc){
+  updateAutoNote(calc);
   let notesHtml = '';
   if(calc.errors.length){
     notesHtml += `<div class="warn-box"><b>Nesrovnalosti — je potřeba ruční kontrola:</b><ul>${calc.errors.map(e=>`<li>${e}</li>`).join('')}</ul></div>`;
   }
-  if(calc.rozmenaLog.length){
-    notesHtml += `<div class="note-box"><b>Potřebná rozměna:</b><ul>` +
-      calc.rozmenaLog.map(b=>`<li>Rozměň ${describePieces(b.give)} za ${describePieces(b.take)} <span style="opacity:.7">(${b.context})</span>${b.uncertain?' — <em>ověř dostupnost větších bankovek</em>':''}</li>`).join('') +
+  if(calc.dyskoRepairDriftTotal){
+    const d = calc.dyskoRepairDriftTotal;
+    if(calc.needsTrzbaSeparation){
+      notesHtml += `<div class="note-box">* <b>Drobný posun z oprav dýška do tržby:</b> drobné úpravy dýška (viz "Drobná úprava dýška" níže), které ušetřily rozměnu, dohromady ${d>0?'uvolnily':'stály'} ${kc(Math.abs(d))} navíc — aplikace je automaticky přidala do tržby. Cílem tržby je proto ${kc(calc.trzbaFinal)}, ne přesná částka z uzávěrky (${kc(calc.cash)}).</div>`;
+    } else {
+      notesHtml += `<div class="note-box">* <b>Drobný posun z oprav dýška do obálky:</b> drobné úpravy dýška (viz "Drobná úprava dýška" níže), které ušetřily rozměnu, dohromady ${d>0?'uvolnily':'stály'} ${kc(Math.abs(d))} navíc — tržba je už podle zadání oddělená, takže appka rozdíl přidala do obálky. Cílem obálky je proto ${kc(calc.obalkaAmount)}, ne přesných 10 %.</div>`;
+    }
+  }
+  if(calc.obalkaRemainder > 0){
+    notesHtml += `<div class="note-box">* <b>Automatický přesun drobných z obálky do tržby:</b> aplikace zjistila, že ${kc(calc.obalkaAmount+calc.obalkaRemainder)} k ideálním 10 % se dá poskládat jen s rozměnou navíc, a nejbližší menší částku (${kc(calc.obalkaAmount)}) použila místo toho — rozdíl (${kc(calc.obalkaRemainder)}) přidala rovnou do tržby. Fyzická hromádka tržby je díky tomu o ${kc(calc.obalkaRemainder)} vyšší než částka z uzávěrky (${kc(calc.cash)}) — cílem je ${kc(calc.trzbaFinal)}. Poznámka o tom je i v sekci 07.</div>`;
+  }
+  if(calc.zakladDeviationLog && calc.zakladDeviationLog.length){
+    notesHtml += `<div class="note-box"><b>Základ mírně upraven (režim tolerance) — bez rozměny:</b><ul>` +
+      calc.zakladDeviationLog.map(dv=>`<li>Chybělo ${dv.missing}× ${fmt(dv.denom)} Kč → nahrazeno: ${describePieces(dv.substitutedWith)}</li>`).join('') +
       `</ul></div>`;
   }
+  const realRozmena = calc.rozmenaLog.filter(x=>!x.isRepair);
+  const repairs = calc.rozmenaLog.filter(x=>x.isRepair);
+  if(repairs.length){
+    notesHtml += `<div class="note-box"><b>Drobná úprava dýška (předešla rozměně):</b><ul>` +
+      repairs.map(b=>`<li>${b.context}</li>`).join('') +
+      `</ul></div>`;
+  }
+  if(realRozmena.length){
+    // 1) Bankovky (≥100 Kč) nemají žádné omezení na počet kusů, takže je můžeme
+    //    bez obav sečíst/odečíst napříč CELÝM výpočtem — díky tomu zmizí řetězce
+    //    typu "rozměň 5000 → …2000…1000…", kde se velká bankovka jen vyrobí
+    //    a hned zase rozbije dál.
+    const netGive = {}, netTake = {};
+    realRozmena.forEach(b=>{
+      Object.entries(b.give).forEach(([d,c])=>{ if(Number(d)>=100) netGive[d]=(netGive[d]||0)+Number(c); });
+      Object.entries(b.take).forEach(([d,c])=>{ if(Number(d)>=100) netTake[d]=(netTake[d]||0)+Number(c); });
+    });
+    BANKNOTES.forEach(d=>{
+      const net = (netGive[d]||0) - (netTake[d]||0);
+      if(net > 0){ netGive[d] = net; delete netTake[d]; }
+      else if(net < 0){ netTake[d] = -net; delete netGive[d]; }
+      else { delete netGive[d]; delete netTake[d]; }
+    });
+
+    // 2) Mince appka smí VYDAT vždy jen po deseti stejných — takové odečítání
+    //    napříč různými rozměnami by mohlo vyjít třeba na "9× 20 Kč", což u
+    //    přepážky nejde požádat. Mince vzniklé přímo rozměnou bankovky (vzor
+    //    z NOTE_BREAKS, vždy po 10 kusech) proto jen SČÍTÁME (součet násobků
+    //    deseti je pořád násobek deseti) — ale mince rozměněné za jiné mince
+    //    (kind:'coin') necháme jako svoje vlastní, oddělené řádky.
+    realRozmena.forEach(b=>{
+      if(b.kind !== 'coin'){
+        Object.entries(b.take).forEach(([d,c])=>{ if(Number(d)<100) netTake[d]=(netTake[d]||0)+Number(c); });
+      }
+    });
+
+    const coinGroups = new Map();
+    realRozmena.filter(b=>b.kind==='coin').forEach(b=>{
+      const sig = x => Object.entries(x).filter(([,c])=>c>0).sort((a,c)=>c[0]-a[0]);
+      const key = JSON.stringify({ g: sig(b.give), t: sig(b.take) });
+      if(!coinGroups.has(key)) coinGroups.set(key, { give:{}, take:{} });
+      const grp = coinGroups.get(key);
+      Object.entries(b.give).forEach(([d,c])=>{ grp.give[d]=(grp.give[d]||0)+Number(c); });
+      Object.entries(b.take).forEach(([d,c])=>{ grp.take[d]=(grp.take[d]||0)+Number(c); });
+    });
+
+    const sortedDenoms = obj => Object.entries(obj).filter(([,c])=>c>0).sort((a,b)=>b[0]-a[0]);
+    const pieceHtml = (denom, count) => {
+      const cls = Number(denom) < 100 ? 'mince' : 'bankovka';
+      return `${count}× <span class="${cls}">${fmt(denom)}</span> Kč`;
+    };
+    const braceSvg = `<svg viewBox="0 0 14 100" preserveAspectRatio="none"><path d="M13,1 C8,1 8,7 8,15 L8,40 C8,48 6,50 1,50 C6,50 8,52 8,60 L8,85 C8,93 8,99 13,99" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+    const anyUncertain = Object.keys(netGive).some(d => UNCERTAIN_NOTES.has(Number(d)));
+
+    const rowsHtml = [];
+    const mainGiveHtml = sortedDenoms(netGive).map(([d,c])=>pieceHtml(d,c)).join('<br>');
+    const mainTakeHtml = sortedDenoms(netTake).map(([d,c])=>`<div class="rozmena-take-line">${pieceHtml(d,c)}</div>`).join('');
+    if(mainGiveHtml && mainTakeHtml){
+      rowsHtml.push(`<div class="rozmena-row">
+        <div class="rozmena-give">${mainGiveHtml}</div>
+        <div class="rozmena-brace">${braceSvg}</div>
+        <div class="rozmena-take">${mainTakeHtml}</div>
+        ${anyUncertain ? '<div class="rozmena-flag" title="Počítá s bankovkou, kterou nemusíte mít zrovna po ruce">*</div>' : ''}
+      </div>`);
+    }
+    [...coinGroups.values()].forEach(g=>{
+      const giveHtml = sortedDenoms(g.give).map(([d,c])=>pieceHtml(d,c)).join('<br>');
+      const takeHtml = sortedDenoms(g.take).map(([d,c])=>`<div class="rozmena-take-line">${pieceHtml(d,c)}</div>`).join('');
+      if(giveHtml && takeHtml){
+        rowsHtml.push(`<div class="rozmena-row">
+          <div class="rozmena-give">${giveHtml}</div>
+          <div class="rozmena-brace">${braceSvg}</div>
+          <div class="rozmena-take">${takeHtml}</div>
+        </div>`);
+      }
+    });
+
+    if(rowsHtml.length){
+      notesHtml += `<div class="note-box"><b>Potřebná rozměna:</b>
+        <div class="rozmena-list">${rowsHtml.join('')}</div>
+        ${anyUncertain ? '<p class="hint" style="margin:10px 0 0;">* počítá s bankovkou, kterou nemusíte mít zrovna po ruce — ověř dostupnost.</p>' : ''}
+      </div>`;
+    }
+  }
   if(!calc.stopHere){
-    notesHtml += `<p class="hint">Skóre optimalizace (penalizace, méně = lépe): <b style="color:var(--forest-dark)">${calc.penaltyScore}</b> — ${calc.rozmenaLog.length} rozměna/y zahrnuta v ceně.</p>`;
+    notesHtml += `<p class="hint">Skóre optimalizace (penalizace, méně = lépe): <b style="color:var(--forest-dark)">${calc.penaltyScore}</b> — ${realRozmena.length} rozměna/y zahrnuta v ceně.</p>`;
   }
   document.getElementById('result-notes').innerHTML = notesHtml;
 
-  window.allocState = { trzba:{...calc.trzba}, obalka:{...calc.obalka} };
+  const zbytek = calc.dyskaPool + calc.obalkaAmount + calc.obalkaRemainder;
+  const idealObalka = calc.obalkaAmount + calc.obalkaRemainder;
+  const zbytekLabel = calc.needsTrzbaSeparation
+    ? ('Po oddělení tržby zbylo'+(calc.needsZaklad?' a základu':''))
+    : 'Celkem k rozdělení (dýška + obálka)';
+  document.getElementById('zbytek-summary').innerHTML = calc.stopHere ? '' : `
+    <div class="stat-box"><div class="stat-label">${zbytekLabel}</div><div class="stat-value">${kc(zbytek)}</div></div>
+    <div class="stat-box"><div class="stat-label">90 % (bereme si rovnou)</div><div class="stat-value">${kc(calc.dyskaPool)}</div></div>
+    <div class="stat-box"><div class="stat-label">10 % (dáváme do obálky)${calc.obalkaRemainder>0?' *':''}</div><div class="stat-value">${kc(idealObalka)}</div></div>
+  `;
+
+  window.allocState = { obalka:{...calc.obalka} };
+  if(calc.needsTrzbaSeparation) window.allocState.trzba = {...calc.trzba};
   if(calc.needsZaklad) window.allocState.zaklad = {...calc.zaklad};
-  calc.dysky.forEach(b=> window.allocState['dysko_'+b.id] = {...b.pieces});
+  calc.dyska.forEach(b=> window.allocState['dysko_'+b.id] = {...b.pieces});
+  if(calc.nerozdelene) window.allocState.nerozdelene = {...calc.nerozdelene};
 
   const bucketZakladEl = document.getElementById('bucket-zaklad');
   if(calc.needsZaklad){
@@ -810,8 +1463,23 @@ function renderResults(calc){
   } else {
     bucketZakladEl.style.display = 'none';
   }
-  renderBucket('bucket-trzba', 'Tržba hotově', 'trzba', calc.cash);
-  renderBucket('bucket-obalka', 'Obálka na manka (~10 %)', 'obalka', calc.obalkaAmount);
+  const bucketTrzbaEl = document.getElementById('bucket-trzba');
+  if(calc.needsTrzbaSeparation){
+    bucketTrzbaEl.style.display = '';
+    renderBucket('bucket-trzba', 'Tržba hotově', 'trzba', calc.trzbaFinal);
+  } else {
+    bucketTrzbaEl.style.display = 'none';
+    bucketTrzbaEl.innerHTML = '';
+  }
+  
+  renderBucket('bucket-obalka', 'Malá obálka u tržby (~10 % dýšek)', 'obalka', calc.obalkaAmount);
+  const bucketNerozdeleneEl = document.getElementById('bucket-nerozdelene');
+  if(calc.nerozdelene && valueOf(calc.nerozdelene) > 0){
+    bucketNerozdeleneEl.style.display = '';
+    renderBucket('bucket-nerozdelene', '⚠ Nerozdělené (ručně přiřaď)', 'nerozdelene', valueOf(calc.nerozdelene));
+  } else {
+    bucketNerozdeleneEl.style.display = 'none';
+  }
   renderDyskoTable();
 
   document.getElementById('results').style.display = 'block';
@@ -821,7 +1489,7 @@ function renderResults(calc){
 
 function recalcReconciliation(){
   if(!lastCalc) return;
-  const buckets = [...(lastCalc.needsZaklad?['zaklad']:[]), 'trzba','obalka', ...lastCalc.dysky.map(b=>'dysko_'+b.id)];
+  const buckets = [...(lastCalc.needsZaklad?['zaklad']:[]), ...(lastCalc.needsTrzbaSeparation?['trzba']:[]), 'obalka', ...(lastCalc.nerozdelene?['nerozdelene']:[]), ...lastCalc.dyska.map(b=>'dysko_'+b.id)];
   const totals = {};
   ALL_DENOMS.forEach(d=>totals[d]=0);
   buckets.forEach(bk=> ALL_DENOMS.forEach(d=> totals[d] += (window.allocState[bk][d]||0)));
@@ -842,7 +1510,105 @@ function recalcReconciliation(){
 }
 
 /* ===================== PDF EXPORT (direct download, no print dialog) ===================== */
-function exportPDF(){
+const WMO_LABELS = {
+  0:'Jasno', 1:'Skoro jasno', 2:'Polojasno', 3:'Zataženo', 45:'Mlha', 48:'Mlha s jinovatkou',
+  51:'Slabé mrholení', 53:'Mrholení', 55:'Silné mrholení', 56:'Mrznoucí mrholení', 57:'Silné mrznoucí mrholení',
+  61:'Slabý déšť', 63:'Déšť', 65:'Silný déšť', 66:'Mrznoucí déšť', 67:'Silný mrznoucí déšť',
+  71:'Slabé sněžení', 73:'Sněžení', 75:'Silné sněžení', 77:'Sněhové zrno',
+  80:'Přeháňky', 81:'Silnější přeháňky', 82:'Prudké přeháňky', 85:'Sněhové přeháňky', 86:'Silné sněhové přeháňky',
+  95:'Bouřka', 96:'Bouřka s kroupami', 99:'Silná bouřka s kroupami'
+};
+// Vrátí teploty a WMO kódy jen za hodiny odpovídající aktuálně zvolenému typu směny.
+function getShiftWeatherWindow(){
+  if(!weatherCache || !weatherCache.hourly) return null;
+  const { time, weather_code, temperature_2m } = weatherCache.hourly;
+  if(!time) return null;
+  const isEvening = typSmeny === 'večerní';
+  const hours = isEvening ? [17,18,19,20,21,22,23] : [10,11,12,13,14,15,16,17];
+  const temps = [], codes = [];
+  time.forEach((t,i)=>{
+    const h = Number(t.slice(11,13));
+    if(hours.includes(h)){
+      if(temperature_2m && temperature_2m[i]!=null) temps.push(temperature_2m[i]);
+      if(weather_code && weather_code[i]!=null) codes.push(weather_code[i]);
+    }
+  });
+  return {temps, codes};
+}
+// Průměrná teplota za hodiny směny (ne denní maximum) — jen text pro zobrazení/export.
+function weatherPreciseTemp(){
+  const w = getShiftWeatherWindow();
+  if(!w || !w.temps.length) return null;
+  const avg = w.temps.reduce((a,b)=>a+b,0)/w.temps.length;
+  return avg.toFixed(1) + ' °C (průměr za směnu)';
+}
+// Převládající (nejčastější) kategorie počasí za hodiny směny.
+function weatherPreciseLabel(){
+  const w = getShiftWeatherWindow();
+  if(!w || !w.codes.length) return null;
+  const freq = {};
+  w.codes.forEach(c=>freq[c]=(freq[c]||0)+1);
+  let bestCode=w.codes[0], bestCount=0;
+  Object.entries(freq).forEach(([c,n])=>{ if(n>bestCount){ bestCount=n; bestCode=Number(c); } });
+  return WMO_LABELS[bestCode] || null;
+}
+// Číselné hodnoty (bez popisku) pro uložení do Tabulky.
+function weatherPreciseTempRaw(){
+  const w = getShiftWeatherWindow();
+  if(!w || !w.temps.length) return '';
+  return (w.temps.reduce((a,b)=>a+b,0)/w.temps.length).toFixed(1);
+}
+
+const RATING_LABELS = {
+  pocasi: ['Bouřka','Déšť','Zataženo','Polojasno','Slunečno'],
+  teplota: ['Zima','Chladno','Tak akorát','Teplo','Horko'],
+  nalada: ['Mizerná','Spíš horší','Normální','Dobrá','Skvělá'],
+  vytizenost: ['Skoro nikdo','Klidno','Normální provoz','Rušno','Nabito'],
+  chovani: ['Nepříjemně','Spíš hůř','Normálně','Mile','Moc mile']
+};
+// Stejné ikonky, jaké appka používá na přepínačích v sekci 07 (viz jejich <i class="fa-...">).
+const RATING_ICONS = {
+  pocasi: ['fa-cloud-bolt','fa-cloud-rain','fa-cloud','fa-cloud-sun','fa-sun'],
+  teplota: ['fa-temperature-empty','fa-temperature-quarter','fa-temperature-half','fa-temperature-three-quarters','fa-temperature-full'],
+  nalada: ['fa-face-frown','fa-face-frown-open','fa-face-meh','fa-face-smile','fa-face-smile-beam'],
+  chovani: ['fa-face-angry','fa-face-frown','fa-face-meh','fa-face-smile','fa-face-grin-beam']
+};
+// "Jak to šlo" a "Vytíženost" v appce místo jedné ikonky opakují hvězdu/postavičku
+// tolikrát, kolik je zvolená hodnota — v PDF to děláme stejně.
+function ratingIconHtml(key, value){
+  if(!value) return '';
+  if(key === 'vykon') return '<i class="fa-solid fa-star"></i>'.repeat(value);
+  if(key === 'vytizenost') return '<i class="fa-solid fa-user"></i>'.repeat(value);
+  const cls = RATING_ICONS[key]?.[value-1];
+  return cls ? `<i class="fa-solid ${cls}"></i>` : '';
+}
+function renderRatingsForPdf(){
+  const rows = [];
+  if(rating.pocasi) rows.push(['pocasi', 'Počasí', weatherPreciseLabel() || RATING_LABELS.pocasi[rating.pocasi-1], rating.pocasi]);
+  if(rating.teplota) rows.push(['teplota', 'Teplota', weatherPreciseTemp() || RATING_LABELS.teplota[rating.teplota-1], rating.teplota]);
+  if(rating.nalada) rows.push(['nalada', 'Nálada za barem', RATING_LABELS.nalada[rating.nalada-1], rating.nalada]);
+  if(rating.vytizenost) rows.push(['vytizenost', 'Vytíženost', RATING_LABELS.vytizenost[rating.vytizenost-1], rating.vytizenost]);
+  if(rating.vykon) rows.push(['vykon', 'Jak to šlo', rating.vykon + ' / 5', rating.vykon]);
+  if(rating.chovani) rows.push(['chovani', 'Chování zákazníků', RATING_LABELS.chovani[rating.chovani-1], rating.chovani]);
+  const note = document.getElementById('f-hodnoceni-note')?.value || '';
+  if(!rows.length && !note) return '';
+  return `
+    <h3 style="font-size:14px;color:#213629;margin:18px 0 6px;">Hodnocení směny</h3>
+    <table style="width:100%;font-size:12px;margin-bottom:6px;">
+      ${rows.map(([key,label,val,value])=>`<tr>
+        <td style="padding:2px 8px 2px 0;color:#666;width:40%;">${label}</td>
+        <td style="padding:2px;font-weight:bold;">
+          <span style="display:inline-flex;align-items:center;gap:6px;">
+            <span style="color:#B9852B;">${ratingIconHtml(key, value)}</span>
+            <span>${escapeHtml(String(val))}</span>
+          </span>
+        </td>
+      </tr>`).join('')}
+    </table>
+    ${note ? `<p style="font-size:12px;color:#444;margin:4px 0 0;"><em>${escapeHtml(note)}</em></p>` : ''}
+  `;
+}
+async function exportPDF(){
   if(!lastCalc){ alert('Nejdřív spočítej rozdělení.'); return; }
 
   const date = document.getElementById('f-date-text').value || '—';
@@ -851,7 +1617,7 @@ function exportPDF(){
   const now = new Date();
   const stamp = now.toLocaleString('cs-CZ');
 
-  const zbytek = lastCalc.dyskyPool + lastCalc.obalkaAmount;
+  const zbytek = lastCalc.dyskaPool + lastCalc.obalkaAmount + lastCalc.obalkaRemainder;
 
   const root = document.getElementById('pdf-root');
   root.innerHTML = `
@@ -865,13 +1631,12 @@ function exportPDF(){
             <td style="padding:3px 8px 3px 24px;color:#666;">Směna</td><td style="padding:3px;font-weight:bold;">${typSmeny}</td></tr>
         <tr><td style="padding:3px 8px 3px 0;color:#666;">Kasa</td><td style="padding:3px;font-weight:bold;">${kasaCislo}</td>
             <td style="padding:3px 8px 3px 24px;color:#666;">Počítá</td><td style="padding:3px;font-weight:bold;">${escapeHtml(counter)}</td></tr>
-        <tr><td style="padding:3px 8px 3px 0;color:#666;">Základ</td><td colspan="3" style="padding:3px;font-weight:bold;">${lastCalc.needsZaklad ? 'appka oddělila ze zadaných čísel' : 'byl oddělen předem, mimo appku'}</td></tr>
       </table>
 
       <h3 style="font-size:14px;color:#213629;margin:0 0 6px;">Barmani na směně</h3>
       <table style="width:100%;font-size:12px;margin-bottom:18px;border-collapse:collapse;">
         <tr style="border-bottom:1px solid #999;"><th style="text-align:left;padding:3px;">Jméno</th><th style="text-align:right;padding:3px;">Hodiny</th></tr>
-        ${lastCalc.dysky.map(b=>`<tr><td style="padding:3px;">${escapeHtml(b.name)}</td><td style="padding:3px;text-align:right;">${fmtHours(b.hours)} h</td></tr>`).join('')}
+        ${lastCalc.dyska.map(b=>`<tr><td style="padding:3px;">${escapeHtml(b.name)}</td><td style="padding:3px;text-align:right;">${fmtHours(b.hours)} h</td></tr>`).join('')}
       </table>
 
       <table style="width:100%;margin-bottom:8px;"><tr>
@@ -887,11 +1652,13 @@ function exportPDF(){
           <h3 style="font-size:14px;color:#213629;margin:0 0 6px;">Přebytek po oddělení tržby</h3>
           <table style="width:100%;font-size:12px;">
             <tr><td style="padding:3px;color:#666;">Zbylo celkem</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(zbytek)}</td></tr>
-            <tr><td style="padding:3px;color:#666;">Dýška (90 %)</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(lastCalc.dyskyPool)}</td></tr>
+            <tr><td style="padding:3px;color:#666;">Dýška (90 %)</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(lastCalc.dyskaPool)}</td></tr>
             <tr><td style="padding:3px;color:#666;">Obálka na manka (10 %)</td><td style="padding:3px;text-align:right;font-weight:bold;">${kc(lastCalc.obalkaAmount)}</td></tr>
           </table>
         </td>
       </tr></table>
+
+      ${renderRatingsForPdf()}
 
       ${comment ? `<h3 style="font-size:14px;color:#213629;margin:18px 0 6px;">Poznámka</h3><p style="font-size:13px;white-space:pre-wrap;">${escapeHtml(comment)}</p>` : ''}
 
@@ -901,6 +1668,18 @@ function exportPDF(){
     </div>
   `;
 
+  if(window.FontAwesome?.dom?.i2svg){
+    await window.FontAwesome.dom.i2svg({ node: root });
+  }
+
+  root.querySelectorAll('svg').forEach(svg=>{
+    svg.setAttribute('width', '14');
+    svg.setAttribute('height', '14');
+    svg.style.width = '14px';
+    svg.style.height = '14px';
+  });
+
+
   const opt = {
     margin: 8,
     filename: `vycetka_${date.replace(/\./g,'-')}_kasa${kasaCislo}_${typSmeny}.pdf`,
@@ -909,22 +1688,265 @@ function exportPDF(){
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
   html2pdf().set(opt).from(root).save();
+  showEncouragement();
+}
+
+/* ===================== GOOGLE SHEETS ULOŽENÍ ===================== */
+// Správce appky sem jednou vyplní URL webové aplikace a PIN (musí sedět s SHARED_PIN
+// v Apps Scriptu) a appku v tomhle stavu uloží/rozešle dál — běžní uživatelé pak
+// v appce nic nastavovat nemusí.
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxcv60tcboyYLcJxdKiLUp31beUQP54ETuupMCb9AO88G6EbfM_TszFSEEV5LtZ5-O2/exec';
+let sheetPin = null; // nastaví se jen po skutečném ověření proti Apps Scriptu — nikdy natvrdo v kódu
+let sheetConnectionDisabled = false; // nastaví appka, pokud uživatel projde heslovou branou bez hesla
+
+function initPasswordGate(){
+  const gate = document.getElementById('password-gate');
+  const wrap = document.getElementById('main-wrap');
+  if(!DEFAULT_SHEET_URL){
+    // appka jeste nema nastavenou URL Apps Scriptu (cerstva instalace) -> pustit dal rovnou,
+    // ale ukladani/import zustanou vypnute, dokud spravce URL nenastavi.
+    gate.style.display = 'none';
+    wrap.style.display = '';
+    sheetConnectionDisabled = true;
+    return;
+  }
+  gate.style.display = 'flex';
+  wrap.style.display = 'none';
+}
+
+const AUTH_DAYS = 30;
+const AUTH_STORAGE_KEY = 'rybarna-auth-until';
+
+async function checkGatePassword(){
+  const input = document.getElementById('gate-password').value;
+  const errorEl = document.getElementById('gate-error');
+  const btn = document.querySelector('#password-gate .btn-primary');
+  errorEl.textContent = '';
+  if(!input){ errorEl.textContent = 'Zadej heslo.'; return; }
+
+  const originalText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Ověřuji…';
+
+  try{
+    const qs = new URLSearchParams({ pin: input, action: 'ping' });
+    const res = await fetch(`${DEFAULT_SHEET_URL}?${qs.toString()}`);
+    const data = await res.json();
+    if(data.ok){
+      sheetPin = input;
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+        until: Date.now() + AUTH_DAYS*24*60*60*1000,
+        pin: input
+      }));
+      document.getElementById('password-gate').style.display = 'none';
+      document.getElementById('main-wrap').style.display = '';
+      updateAuthBadge();
+    } else {
+      errorEl.textContent = 'Nesprávné heslo, zkus to znovu.';
+    }
+  } catch(err){
+    errorEl.textContent = 'Nepodařilo se spojit se serverem — zkontroluj připojení k internetu. (' + err.message + ')';
+  } finally {
+    btn.disabled = false; btn.textContent = originalText;
+  }
+}
+
+function logoutGate(){
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  location.reload();
+}
+
+function showGateAgain(){
+  document.getElementById('main-wrap').style.display = 'none';
+  document.getElementById('password-gate').style.display = '';
+  document.getElementById('auth-badge').style.display = 'none';
+  document.getElementById('gate-password').value = '';
+  document.getElementById('gate-error').textContent = '';
+}
+
+function updateAuthBadge(){
+  const badge = document.getElementById('auth-badge');
+  let stored;
+  try{ stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || 'null'); } catch(e){ stored = null; }
+  const until = stored ? stored.until : 0;
+  const daysLeft = Math.ceil((until - Date.now()) / (24*60*60*1000));
+  if(until && daysLeft > 0){
+    const slovo = daysLeft === 1 ? 'den' : (daysLeft < 5 ? 'dny' : 'dní');
+    badge.textContent = `Přihlášen · zbývá ${daysLeft} ${slovo} · Odhlásit se`;
+    badge.onclick = logoutGate;
+  } else {
+    badge.textContent = 'Nepřihlášen · Přihlásit se';
+    badge.onclick = showGateAgain;
+  }
+  badge.style.display = 'inline-block';
+}
+
+// Zkusí obnovit přihlášení hned při načtení stránky
+function tryAutoLogin(){
+  let stored;
+  try{ stored = JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY) || 'null'); } catch(e){ stored = null; }
+  if(stored && stored.pin && Date.now() < stored.until){
+    sheetPin = stored.pin;
+    document.getElementById('password-gate').style.display = 'none';
+    document.getElementById('main-wrap').style.display = '';
+    updateAuthBadge();
+  } else if(stored){
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+}
+document.addEventListener('DOMContentLoaded', tryAutoLogin);
+
+function bypassGate(){
+  sheetConnectionDisabled = true;
+  document.getElementById('password-gate').style.display = 'none';
+  document.getElementById('main-wrap').style.display = '';
+  updateAuthBadge();
+}
+
+function getSheetCreds(){
+  return { url: DEFAULT_SHEET_URL, pin: sheetPin};
+}
+
+// ---- Orientační import barmanů + hodin z rozpisu směn (Google Sheets, jiná tabulka) ----
+// Používá stejnou URL webové aplikace a PIN jako ukládání výčetek (Apps Script má
+// obě funkce, doGet i doPost, v jednom projektu).
+async function importFromSchedule(){
+  const statusEl = document.getElementById('schedule-status');
+  if(sheetConnectionDisabled){
+    if(statusEl) statusEl.textContent = 'Pokračovalx jsi bez hesla — import z rozpisu je proto vypnutý.';
+    return;
+  }
+  const { url, pin } = getSheetCreds();
+  if(!url){
+    if(statusEl) statusEl.textContent = 'Aplikace nemá nastavené propojení s Tabulkou — kontaktuj správce.';
+    return;
+  }
+  const dateVal = document.getElementById('f-date').value;
+  if(!dateVal){ if(statusEl) statusEl.textContent = 'Nejdřív vyplň datum směny v sekci 01.'; return; }
+  const shiftParam = typSmeny === 'večerní' ? 'vecerni' : 'denni';
+
+  if(statusEl) statusEl.textContent = 'Načítám rozpis…';
+  try{
+    const qs = new URLSearchParams({ pin, date: dateVal, shift: shiftParam });
+    const res = await fetch(`${url}?${qs.toString()}`);
+    const data = await res.json();
+    if(!data.ok){
+      statusEl.textContent = '✕ ' + (data.error || 'Nepodařilo se načíst rozpis.');
+      return;
+    }
+    if(!data.barmani || data.barmani.length === 0){
+      statusEl.textContent = `Rozpis (list „${data.sheetName}") pro tenhle den a směnu nenašel nikoho — zadej barmany ručně.`;
+      return;
+    }
+    bartenders = data.barmani.map(b => ({ id: 'bt'+(btSeq++), name: b.name, hours: String(b.hours).replace('.', ',') }));
+    counterBartenderId = null;
+    document.getElementById('f-counter').value = '';
+    renderBartenders();
+    statusEl.textContent = `✓ Načteno ${data.barmani.length} z rozpisu (list „${data.sheetName}") — jen orientačně, zkontroluj a uprav podle potřeby.`;
+  } catch(err){
+    statusEl.textContent = '✕ Nepodařilo se spojit s rozpisem směn. (' + err.message + ')';
+  }
+}
+
+async function saveToSheet(){
+  if(!lastCalc){ alert('Nejdřív spočítej rozdělení.'); return; }
+  const statusEl = document.getElementById('sheet-status');
+  if(sheetConnectionDisabled){
+    statusEl.textContent = 'Pokračovalx jsi bez hesla — ukládání do Tabulky je proto vypnuté. Použij prosím PDF export a předej výčetku jinak.';
+    return;
+  }
+  const { url, pin } = getSheetCreds();
+  if(!url){
+    statusEl.textContent = 'Aplikace nemá nastavené propojení s Tabulkou — kontaktuj správce.';
+    document.getElementById('sheet-status').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  const date = document.getElementById('f-date-text').value || '—';
+  const counter = document.getElementById('f-counter').value || '—';
+  const comment = document.getElementById('f-comment').value || '';
+  const hodnoceniNote = document.getElementById('f-hodnoceni-note').value || '';
+  const zbytek = lastCalc.dyskaPool + lastCalc.obalkaAmount + lastCalc.obalkaRemainder;
+  const barmaniText = lastCalc.dyska.map(b=>`${b.name} (${fmtHours(b.hours)} h, ${kc(b.amount)})`).join('; ');
+
+  const payload = {
+    pin,
+    datum: date, smena: typSmeny, kasa: kasaCislo, pocita: counter,
+    barmani: barmaniText,
+    trzbaHotove: lastCalc.cash, trzbaKartou: lastCalc.card, trzbaCelkem: lastCalc.cash+lastCalc.card,
+    trzbaFyzicka: lastCalc.trzbaFinal, obalkaZaokrDoTrzby: lastCalc.obalkaRemainder,
+    zbytek: zbytek, dyska: lastCalc.dyskaPool, obalka: lastCalc.obalkaAmount,
+    pocasi: rating.pocasi, teplota: rating.teplota, nalada: rating.nalada, vytizenost: rating.vytizenost,
+    vykon: rating.vykon, chovani: rating.chovani, hodnoceniPoznamka: hodnoceniNote,
+    teplotaPresne: weatherPreciseTempRaw(), pocasiPresne: weatherPreciseLabel() || '',
+    poznamka: comment, ulozeno: new Date().toLocaleString('cs-CZ')
+  };
+
+  const btn = document.getElementById('sheet-save-btn');
+  const originalText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Ukládám…';
+  statusEl.textContent = '';
+
+  try{
+    // Content-Type: text/plain se používá schválně — s application/json by Apps Script
+    // vyžadoval CORS preflight (OPTIONS), který doPost neumí obsloužit.
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.ok){
+      statusEl.textContent = `✓ Uloženo do Google Tabulky jako řádek ${data.row} (${payload.ulozeno}).`;
+      btn.textContent = '✓ Uloženo — uložit znovu?';
+      btn.disabled = false;
+      showEncouragement();
+    } else {
+      statusEl.textContent = '✕ Tabulka vrátila chybu: ' + (data.error || 'neznámá chyba') + '. Zkontroluj URL/PIN nebo Apps Script.';
+      btn.disabled = false; btn.textContent = originalText;
+    }
+  } catch(err){
+    statusEl.textContent = '✕ Nepodařilo se spojit s Google Tabulkou — zkontroluj URL a připojení k internetu. (' + err.message + ')';
+    btn.disabled = false; btn.textContent = originalText;
+  }
 }
 
 /* ===================== BOOTSTRAP ===================== */
 buildDenomInputs();
 addBartender();
 addBartender();
+addBartender();
 document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
 updateDateDisplay();
-document.getElementById('f-date').addEventListener('change', updateDateDisplay);
-setupToggle('tg-typ', v => typSmeny = v);
+document.getElementById('f-date').addEventListener('change', ()=>{
+  updateDateDisplay();
+  fetchWeatherForDate(document.getElementById('f-date').value);
+});
+setupToggle('tg-typ', v => { typSmeny = v; applyWeatherToRatings(); });
 setupToggle('tg-kasa', v => kasaCislo = v);
-setupToggle('tg-round', v => roundGranularity = Number(v));
-setupToggle('tg-zaklad-mode', v => zakladAlreadySeparated = (v==='separated'));
+setupToggle('tg-round', v => roundMode = v);
+setupToggle('tg-zaklad-mode', v => {
+  inventoryMode = v; // 'needs' | 'separated' | 'both'
+  document.getElementById('wrap-zaklad-tolerance').style.display = (v==='needs') ? '' : 'none';
+});
+setupToggle('tg-zaklad-tolerance', v => zakladTolerance = (v==='tolerant'));
+setupToggle('rate-pocasi', v => rating.pocasi = Number(v));
+setupToggle('rate-nalada', v => rating.nalada = Number(v));
+setupToggle('rate-vytizenost', v => rating.vytizenost = Number(v));
+setupToggle('rate-teplota', v => rating.teplota = Number(v));
+setupToggle('rate-vykon', v => rating.vykon = Number(v));
+setupToggle('rate-chovani', v => rating.chovani = Number(v));
 document.getElementById('f-cash').addEventListener('input', updateTotals);
 document.getElementById('f-card').addEventListener('input', updateTotals);
 updateTotals();
+initPasswordGate();
+
+// Automaticky: typ směny podle aktuální hodiny (19:00–7:00 večerní, jinak denní) + zkus počasí.
+{
+  const h = new Date().getHours();
+  const auto = (h>=19 || h<7) ? 'večerní' : 'denní';
+  setToggleValue('tg-typ', auto);
+}
+fetchWeatherForDate(document.getElementById('f-date').value);
 </script>
 </body>
 </html>
